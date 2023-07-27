@@ -1,10 +1,9 @@
-import React from 'react';
-import { Button, Col, Form,  Row, Tab, Tabs } from 'react-bootstrap';
+import React from "react";
+import { Button, Col, Form, Row, Tab, Tabs } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import * as Switcherdatacustam from "../../../../data/Switcherdata/Switcherdatacustam";
 
 const SignIn = () => {
-
   return (
     <div>
       <div className="page">
@@ -47,7 +46,7 @@ const SignIn = () => {
                   <div className="main-card-signin d-md-flex">
                     <div className="wd-100p">
                       <div className="d-flex mb-4">
-                        <Link to={`${process.env.PUBLIC_URL}/dashboard/dashboard-1`}>
+                        <Link to={`${process.env.PUBLIC_URL}/dashboard`}>
                           <img
                             src={require("../../../../assets/img/brand/favicon.png")}
                             className="sign-favicon ht-40"
@@ -73,7 +72,7 @@ const SignIn = () => {
                                       className="panel-body tabs-menu-body border-0 p-3"
                                       id="tab5"
                                     >
-                                      <Form action="#" >
+                                      <Form action="#">
                                         <Form.Group className="form-group">
                                           <Form.Label>Email</Form.Label>{" "}
                                           <Form.Control
@@ -95,7 +94,6 @@ const SignIn = () => {
                                         <Button
                                           variant=""
                                           className="btn btn-primary btn-block"
-                                         
                                         >
                                           Sign In
                                         </Button>
@@ -226,7 +224,11 @@ const SignIn = () => {
                             </p>
                             <p>
                               Don't have an account?{" "}
-                              <Link to={`${process.env.PUBLIC_URL}/pages/Authentication/sigup`}>Create an Account</Link>
+                              <Link
+                                to={`${process.env.PUBLIC_URL}/pages/Authentication/sigup`}
+                              >
+                                Create an Account
+                              </Link>
                             </p>
                           </div>
                         </div>
@@ -240,7 +242,8 @@ const SignIn = () => {
         </div>
       </div>
     </div>
-  );}
+  );
+};
 
 SignIn.propTypes = {};
 
