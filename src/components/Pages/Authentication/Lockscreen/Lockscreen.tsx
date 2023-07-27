@@ -1,6 +1,6 @@
-import React from 'react';
-import { Button, Col, Form, FormGroup, Row } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Button, Col, Form, FormGroup, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import * as Switcherdatacustam from "../../../../data/Switcherdata/Switcherdatacustam";
 const Lockscreen = () => (
   <div>
@@ -46,7 +46,10 @@ const Lockscreen = () => (
                     <div className="wd-100p">
                       <div className="d-flex mx-auto">
                         {" "}
-                        <Link to={`${process.env.PUBLIC_URL}/dashboard/dashboard-1`} className="mx-auto d-flex">
+                        <Link
+                          to={`${process.env.PUBLIC_URL}/dashboard/`}
+                          className="mx-auto d-flex"
+                        >
                           <img
                             src={require("../../../../assets/img/brand/favicon.png")}
                             className="sign-favicon ht-40 mx-auto"
