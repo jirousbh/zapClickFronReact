@@ -1,12 +1,12 @@
 import React from "react";
-import { Button, Form, } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import {
   useTable,
   useSortBy,
   useGlobalFilter,
   usePagination,
 } from "react-table";
-export const COLUMNS:any = [
+export const COLUMNS: any = [
   {
     Header: "Name",
     accessor: "Name",
@@ -542,7 +542,7 @@ export const BasicTable = () => {
     gotoPage,
     pageCount,
     setPageSize,
-  }:any = tableInstance;
+  }: any = tableInstance;
 
   const { globalFilter, pageIndex, pageSize } = state;
 
@@ -564,9 +564,9 @@ export const BasicTable = () => {
       </div>
       <table {...getTableProps()} className="table table-hover mb-0">
         <thead>
-          {headerGroups.map((headerGroup:any) => (
+          {headerGroups.map((headerGroup: any) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column:any) => (
+              {headerGroup.headers.map((column: any) => (
                 <th
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                   className={column.className}
@@ -589,11 +589,11 @@ export const BasicTable = () => {
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {page.map((row:any) => {
+          {page.map((row: any) => {
             prepareRow(row);
             return (
               <tr {...row.getRowProps()}>
-                {row.cells.map((cell:any) => {
+                {row.cells.map((cell: any) => {
                   return (
                     <td className="borderrigth" {...cell.getCellProps()}>
                       {cell.render("Cell")}
@@ -674,7 +674,7 @@ export const BasicTable = () => {
     </>
   );
 };
-const GlobalFilter = ({ filter, setFilter }:any) => {
+const GlobalFilter = ({ filter, setFilter }: any) => {
   return (
     <span className="d-flex ms-auto">
       <Form.Control

@@ -15,7 +15,6 @@ export const Error404 = () => {
         className="page"
         onClick={() => Switcherdatacustam.Swichermainrightremove()}
       >
-        
         {/* <!-- Main-error-wrapper --> */}
         <div className="main-error-wrapper page page-h">
           <div>
@@ -30,7 +29,7 @@ export const Error404 = () => {
             </h6>
             <Link
               className="btn btn-light"
-              to={`${process.env.PUBLIC_URL}/dashboard/dashboard-1/`}
+              to={`${process.env.PUBLIC_URL}/dashboard/`}
             >
               Back to Home
             </Link>

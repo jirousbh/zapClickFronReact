@@ -4,14 +4,13 @@ import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
 const firebaseConfig = {
-  apiKey: "AIzaSyBiqTTBi3g0bgNqpYTv1U5bRPkm4WVJ6gw",
-  authDomain: "zapclick-9efd3.firebaseapp.com",
-  databaseURL: "https://zapclick-9efd3-default-rtdb.firebaseio.com",
-  projectId: "zapclick-9efd3",
-  storageBucket: "zapclick-9efd3.appspot.com",
-  messagingSenderId: "136662292535",
-  appId: "1:136662292535:web:e392c92df1de7b85ccc7b2",
-  measurementId: "G-5HT1J7CFH4",
+  apiKey: "AIzaSyDm3M53asD2voJcYkhEixNvDBzQBdY7Kf0",
+  authDomain: "test-zap-click.firebaseapp.com",
+  projectId: "test-zap-click",
+  databaseURL: "https://test-zap-click-default-rtdb.firebaseio.com",
+  storageBucket: "test-zap-click.appspot.com",
+  messagingSenderId: "993297592200",
+  appId: "1:993297592200:web:22b060570774219152d43d",
 };
 const firebaseApp = firebase.initializeApp(firebaseConfig);
 
