@@ -44,6 +44,7 @@
     "lodash": "^4.17.21",
     "material-ui-dropzone": "^3.5.0",
     "nanoid": "^4.0.0",
+    "qr-code-styling": "^1.6.0-rc.1",
     "react": "^18.2.0",
     "react-apexcharts": "^1.4.0",
     "react-bootstrap": "^2.5.0",

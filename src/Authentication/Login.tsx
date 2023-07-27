@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Col, Form, Row, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../Firebase/firebase";
-import './css/Login.css'
+import "./css/Login.css";
 
 const SignIn = () => {
   const [err, setError] = useState("");
@@ -21,7 +21,7 @@ const SignIn = () => {
   let navigate = useNavigate();
 
   const routeChange = () => {
-    let path = `${process.env.PUBLIC_URL}/dashboard/dashboard-1/`;
+    let path = `${process.env.PUBLIC_URL}/dashboard/`;
     navigate(path);
   };
 
@@ -86,17 +86,21 @@ const SignIn = () => {
                                   <Form.Group className="form-group">
                                     <div className="d-flex justify-content-between">
                                       <Form.Label>Senha</Form.Label>{" "}
-                                      
                                       <p className="d-flex align-items-center mb-0">
-                                        <Link className="forget-your-password" to="#">Esqueceu sua senha?</Link>
+                                        <Link
+                                          className="forget-your-password"
+                                          to="#"
+                                        >
+                                          Esqueceu sua senha?
+                                        </Link>
                                       </p>
                                     </div>
-                                    
+
                                     <div
                                       className="input-group input-group-merge"
                                       style={{
-                                        display: 'flex',
-                                        flexDirection: 'row',
+                                        display: "flex",
+                                        flexDirection: "row",
                                       }}
                                     >
                                       <Form.Control
