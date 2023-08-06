@@ -1,5 +1,7 @@
-import React from "react";
-import ReactApexChart from "react-apexcharts";
+// @ts-nocheck
+import React, { useEffect, useState } from "react";
+
+import { Link, useNavigate } from "react-router-dom";
 import {
   useTable,
   useSortBy,
@@ -12,16 +14,39 @@ import {
   Row,
   Card,
   Button,
+  Form,
+  OverlayTrigger,
+  Tooltip,
   ProgressBar,
 } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+
 import * as Dashboarddata from "./data";
 import { COLUMNS, DATATABLE, GlobalFilter } from "./data";
+
+import * as FirebaseService from "../../../services/FirebaseService";
+import { toDateTime } from "../../../utils/dates";
+import { auth } from "../../../Firebase/firebase";
+
 export default function Dashboard() {
+  let navigate = useNavigate();
+
+  const [showHidden, setShowHidden] = useState(false);
+  const [showEndedCampaigns, setShowEndedCampaigns] = useState(false);
+
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
+  const [campaignsList, setCampaignsList] = useState([]);
+
+  const [topCardsInfo, setTopCardsInfo] = useState({
+    totalCampaigns: 0,
+    activeCampaigns: 0,
+    totalLinks: 0,
+    totalClicks: 0,
+  });
+
   const tableInstance = useTable(
     {
       columns: COLUMNS,
-      data: DATATABLE,
+      data: campaignsList,
     },
     useGlobalFilter,
     useSortBy,
@@ -48,12 +73,176 @@ export default function Dashboard() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
-  let navigate = useNavigate();
-
-  const routeChange = () => {
+  const navigateToCreateNewCampaign = () => {
     let path = `${process.env.PUBLIC_URL}/new-campaign/`;
     navigate(path);
   };
+
+  const navigateToEditCampaign = () => {};
+
+  const navigateToCampaignGroups = () => {};
+
+  const navigateToCampaignMessages = () => {};
+
+  const navigateToLeads = () => {};
+
+  const setupProjectList = function (data, admin = false) {
+    // const user = auth.onAuthStateChanged((user) => console.log("user", user));
+
+    if (data.length) {
+      const campaignsUpdated = data.map((campaign) => {
+        return {
+          id: campaign.id,
+          name: <Link to="#">{campaign.name}</Link>,
+          totalLinks: campaign.totalLinks,
+          projClicks:
+            campaign.totalClicks +
+            "/" +
+            campaign.maxClicks * campaign.totalLinks,
+          endDate: toDateTime(campaign.endDate["_seconds"] + 10800)
+            .toLocaleString("pt-BR")
+            .substring(0, 10),
+          entryLink: (
+            <Link to={`https://wtzp.link/r/${campaign.entryLink}`}>
+              {`https://wtzp.link/r/${campaign.entryLink}`}
+              <i className="fas primary fa-external-link-alt ms-2"></i>
+            </Link>
+          ),
+          status: (
+            <Form className="ms-auto">
+              <Form.Check
+                checked={campaign.active}
+                type="switch"
+                id="custom-switch"
+                onChange={() => {}}
+              />
+            </Form>
+          ),
+          options: (
+            <span className="">
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Grupos da Campanha</Tooltip>}
+              >
+                <Link
+                  to="#"
+                  onClick={navigateToCampaignGroups}
+                  className="btn btn-primary btn-sm rounded-11 me-2"
+                >
+                  <i className="fa fa-users"></i>
+                </Link>
+              </OverlayTrigger>
+
+              {campaign.useZapi ? (
+                <>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Relatório de Leads</Tooltip>}
+                  >
+                    <Link
+                      to="#"
+                      onClick={navigateToEditCampaign}
+                      className="btn bg-green btn-sm rounded-11 me-2"
+                    >
+                      <i className="fa fa-magnet"></i>
+                    </Link>
+                  </OverlayTrigger>
+
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Mensagens Enviadas</Tooltip>}
+                  >
+                    <Link
+                      to="#"
+                      onClick={navigateToEditCampaign}
+                      className="btn bg-green btn-sm rounded-11 me-2"
+                    >
+                      <i className="fa fa-comment-dots"></i>
+                    </Link>
+                  </OverlayTrigger>
+                </>
+              ) : null}
+
+              {admin ? (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Alterar Campanha</Tooltip>}
+                >
+                  <Link
+                    to="#"
+                    onClick={navigateToEditCampaign}
+                    className="btn bg-yellow btn-sm rounded-11"
+                  >
+                    <i className="fa fa-edit"></i>
+                  </Link>
+                </OverlayTrigger>
+              ) : null}
+            </span>
+          ),
+        };
+      });
+
+      setCampaignsList(campaignsUpdated);
+
+      const activeCampaigns = data.filter((campaign) => {
+        const projEndDate = new Date(campaign.endDate._seconds * 1000);
+        const actualDate = new Date();
+
+        return campaign.active && projEndDate > actualDate;
+      }).length;
+
+      const totalClicks = data.reduce((acumulador, campaign) => {
+        return acumulador + campaign.totalClicks;
+      }, 0);
+      const totalLinks = data.reduce((acumulador, campaign) => {
+        return acumulador + campaign.totalLinks;
+      }, 0);
+
+      setTopCardsInfo({
+        totalCampaigns: data?.length | 0,
+        activeCampaigns,
+        totalLinks,
+        totalClicks,
+      });
+    } else {
+      setCampaignsList([
+        {
+          id: 0,
+          name: "Nenhum Dado Encontrado...",
+          entryLink: "",
+          description: "",
+          companyId: "",
+          company: "",
+          clientId: "",
+          client: "",
+          maxClicks: "",
+          endDate: "",
+          endDateLabel: "",
+          options: "",
+        },
+      ]);
+    }
+  };
+
+  const loadCampaigns = async function (showEnded: boolean = false) {
+    const fetchProjResult = await FirebaseService.callFirebaseFunction(
+      "fetchProjects",
+      {
+        showEnded,
+      }
+    );
+
+    setupProjectList(fetchProjResult.data, false);
+  };
+
+  const handleEndedCampaigns = () => {
+    setShowEndedCampaigns(!showEndedCampaigns);
+    loadCampaigns(!showEndedCampaigns);
+  };
+
+  useEffect(() => {
+    loadCampaigns();
+  }, []);
 
   return (
     <React.Fragment>
@@ -79,7 +268,9 @@ export default function Dashboard() {
                   </div>
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
-                      <h4 className="tx-22 font-weight-semibold mb-2">20</h4>
+                      <h4 className="tx-22 font-weight-semibold mb-2">
+                        {topCardsInfo.totalCampaigns}
+                      </h4>
                     </div>
                   </div>
                 </div>
@@ -102,7 +293,9 @@ export default function Dashboard() {
                   </div>
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
-                      <h4 className="tx-22 font-weight-semibold mb-2">10</h4>
+                      <h4 className="tx-22 font-weight-semibold mb-2">
+                        {topCardsInfo.activeCampaigns}
+                      </h4>
                     </div>
                   </div>
                 </div>
@@ -125,7 +318,9 @@ export default function Dashboard() {
                   </div>
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
-                      <h4 className="tx-22 font-weight-semibold mb-2">5</h4>
+                      <h4 className="tx-22 font-weight-semibold mb-2">
+                        {topCardsInfo.totalLinks}
+                      </h4>
                     </div>
                   </div>
                 </div>
@@ -148,7 +343,9 @@ export default function Dashboard() {
                   </div>
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
-                      <h4 className="tx-22 font-weight-semibold mb-2">5</h4>
+                      <h4 className="tx-22 font-weight-semibold mb-2">
+                        {topCardsInfo.totalClicks}
+                      </h4>
                     </div>
                   </div>
                 </div>
@@ -166,13 +363,32 @@ export default function Dashboard() {
 
       {/* <!-- row  --> */}
       <Row>
-        <Col sm={12} className="col-12">
+        <Col sm={6} className="col-12">
           <Button
             variant=""
             className="btn me-2 btn-primary mb-4"
-            onClick={() => routeChange()}
+            onClick={() => navigateToCreateNewCampaign()}
           >
             Criar Campanha
+          </Button>
+        </Col>
+        <Col sm={6} className="col-12 d-flex justify-content-end">
+          <Button
+            variant=""
+            className="btn btn-outline-primary mb-4"
+            onClick={handleEndedCampaigns}
+          >
+            {!showEndedCampaigns ? (
+              <>
+                <i className="fas fa-eye-slash me-2"></i>
+                Exibir Campanhas Finalizadas
+              </>
+            ) : (
+              <>
+                <i className="fas fa-eye me-2"></i>
+                Exibir Campanhas Ativas
+              </>
+            )}
           </Button>
         </Col>
       </Row>
