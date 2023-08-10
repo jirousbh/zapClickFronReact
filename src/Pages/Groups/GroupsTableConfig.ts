@@ -16,31 +16,17 @@ export const GROUPS_COLUMNS: any = [
   },
   {
     Header: "Cliques",
-    accessor: "maxClicks",
+    accessor: "clickCount",
     className: "text-center ",
   },
   {
     Header: "Tempo ativo",
-    accessor: "endDate",
+    accessor: "activeTime",
     className: "text-center ",
   },
   {
     Header: "Opções",
     accessor: "options",
     className: "text-center ",
-  },
-];
-
-export const GROUPS_DATATABLE = [
-  {
-    id: 1,
-    name: "Projeto Teste",
-    totalLinks: 0,
-    totalClicks: 0,
-    projClicks: 0,
-    maxClicks: 0,
-    endDate: new Date().toLocaleString("pt-BR").substring(0, 10),
-    url: "https://teste.com/",
-    options: null,
   },
 ];

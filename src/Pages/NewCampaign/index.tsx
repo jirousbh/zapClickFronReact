@@ -23,7 +23,7 @@ import {
   GlobalFilter,
 } from "../../components/Dashboard/Dashboard-1/data";
 
-export default function Users() {
+export default function NewCampaign() {
   const [err, setError] = useState("");
   const [data, setData] = useState({
     name: "",

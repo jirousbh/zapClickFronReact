@@ -346,12 +346,12 @@ export const COLUMNS: any = [
   },
   {
     Header: "Grupos",
-    accessor: "ClientName",
+    accessor: "totalLinks",
     className: "text-center ",
   },
   {
     Header: "Cliques",
-    accessor: "maxClicks",
+    accessor: "projClicks",
     className: "text-center ",
   },
   {

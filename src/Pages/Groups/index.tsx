@@ -1,12 +1,16 @@
 import React, { useRef, useEffect, useState } from "react";
+
+import { useDispatch, useSelector } from "react-redux";
+import QRCodeStyling from "qr-code-styling";
 import ReactApexChart from "react-apexcharts";
+import Select, { SingleValue } from "react-select";
+import { Link, useNavigate } from "react-router-dom";
 import {
   useTable,
   useSortBy,
   useGlobalFilter,
   usePagination,
 } from "react-table";
-import Select, { SingleValue } from "react-select";
 import {
   Breadcrumb,
   Col,
@@ -14,9 +18,9 @@ import {
   Card,
   Button,
   ProgressBar,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
-import QRCodeStyling from "qr-code-styling";
 
 import * as Dashboarddata from "../../components/Dashboard/Dashboard-1/data";
 import {
@@ -24,17 +28,43 @@ import {
   DATATABLE,
   GlobalFilter,
 } from "../../components/Dashboard/Dashboard-1/data";
-import { GROUPS_COLUMNS, GROUPS_DATATABLE } from "./GroupsTableConfig";
+
+import { GROUPS_COLUMNS } from "./GroupsTableConfig";
+import {
+  setCampaignsList,
+  setSelectedCampaignId,
+} from "../../redux/actions/campaign";
+import { getCampaignsList } from "../../services/CampaignsService";
+import { secondsToDhms, toDateTime } from "../../utils/dates";
+import { getGroupsByCampaign } from "../../services/GroupsService";
+import { pad } from "../../utils/number";
+import { setSelectedGroup } from "../../redux/actions/groups";
 
 export default function Dashboard() {
+  const dispatch = useDispatch();
+
+  const campaignsList = useSelector(
+    (state: any) => state.campaignReducer.campaignsList
+  );
+  const selectedCampaignId = useSelector(
+    (state: any) => state.campaignReducer.selectedCampaignId
+  );
+
   const [campaignSelected, setCampaignSelected] = useState<any>(null);
   const [singleselect, setSingleselect] = useState<SingleValue<number>>(null);
   const [options, setOptions] = useState<any>([]);
 
+  const [campaignGroups, setCampaignGroups] = useState<any>([]);
+
   let navigate = useNavigate();
 
   const routeChange = () => {
+    if (!campaignSelected) return;
+
     let path = `${process.env.PUBLIC_URL}/new-campaign/`;
+
+    dispatch(setSelectedCampaignId(campaignSelected.id));
+
     navigate(path);
   };
 
@@ -43,16 +73,167 @@ export default function Dashboard() {
   const tableInstance = useTable(
     {
       columns: GROUPS_COLUMNS,
-      data: GROUPS_DATATABLE,
+      data: campaignGroups,
     },
     useGlobalFilter,
     useSortBy,
     usePagination
   );
 
-  const onSelect = (value: any) => {
+  const navigateToNewGroup = (
+    isEdit: boolean = false,
+    seletedGroup: any = null
+  ) => {
+    let path = `${process.env.PUBLIC_URL}/new-group/`;
+
+    if (isEdit && seletedGroup) {
+      dispatch(setSelectedGroup(seletedGroup));
+      dispatch(setSelectedCampaignId(seletedGroup.projectId));
+    } else {
+      dispatch(setSelectedGroup(null));
+      dispatch(setSelectedCampaignId(null));
+    }
+
+    navigate(path);
+  };
+
+  const setupGroups = async (campaign: any) => {
+    const groupsResponse = await getGroupsByCampaign(campaign.id);
+
+    if (groupsResponse?.data?.length) {
+      const groupsList = groupsResponse?.data?.map((group) => {
+        const urtToShow =
+          group.url.length > 35
+            ? group.url.substring(0, 35) + "..."
+            : group.url;
+
+        let activeTime;
+        if (!(group.startTime && group.endTime)) activeTime = "N/A";
+        else {
+          let diffBettweenDates =
+            group.endTime._seconds - group.startTime._seconds;
+
+          activeTime = secondsToDhms(diffBettweenDates);
+        }
+
+        return {
+          linkId: group.id,
+          id: pad(group.id),
+          url: (
+            <Link
+              to={`${group.url}`}
+              className={group.isFull ? "bg-danger" : ""}
+            >
+              {urtToShow}
+            </Link>
+          ),
+          urlFull: group.url,
+          clickCount: group.clickCount + "/" + group.maxClicks,
+          projectId: group.projectId,
+          project: campaign.data.name,
+          activeTime: activeTime,
+          startTime: group.startTime
+            ? toDateTime(group.startTime["_seconds"]).toLocaleString("pt-BR")
+            : "N/A",
+          endTime: group.endTime
+            ? toDateTime(group.endTime["_seconds"]).toLocaleString("pt-BR")
+            : "N/A",
+          userLead: group.leadUser || 0,
+          isFull: group.isFull,
+          entranceRate: group.entranceRate
+            ? (group.entranceRate * 100).toFixed(2) + "%"
+            : "N/A",
+
+          options: (
+            <span className="">
+              {group.isFull ? (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Ativar Link</Tooltip>}
+                >
+                  <Link
+                    to="#"
+                    onClick={() => {}}
+                    className="btn btn-primary btn-sm rounded-11 me-2"
+                  >
+                    <i className="fa fa-link"></i>
+                  </Link>
+                </OverlayTrigger>
+              ) : (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Desativar Link</Tooltip>}
+                >
+                  <Link
+                    to="#"
+                    onClick={() => {}}
+                    className="btn btn-primary btn-sm rounded-11 me-2"
+                  >
+                    <i className="fa fa-link"></i>
+                  </Link>
+                </OverlayTrigger>
+              )}
+
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Alterar Grupo</Tooltip>}
+              >
+                <Button
+                  variant=""
+                  className="btn ripple bg-yellow btn-sm rounded-11 me-2"
+                  onClick={() => navigateToNewGroup(true, group)}
+                >
+                  <i className="fa fa-edit"></i>
+                </Button>
+              </OverlayTrigger>
+
+              {group.clickCount && group.id == groupsResponse?.data?.length ? (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Apagar Grupo</Tooltip>}
+                >
+                  <Link
+                    to="#"
+                    onClick={() => {}}
+                    className="btn bg-danger btn-sm rounded-11"
+                  >
+                    <i className="fa fa-trash"></i>
+                  </Link>
+                </OverlayTrigger>
+              ) : null}
+            </span>
+          ),
+        };
+      });
+
+      setCampaignGroups(groupsList);
+    } else {
+      setCampaignGroups([
+        {
+          linkId: 0,
+          id: 0,
+          url: "Nenhum Dado Encontrado...",
+          urlFull: "",
+          clickCount: "",
+          projectId: "",
+          project: "",
+          activeTime: "",
+          startTime: "",
+          endTime: "",
+          userLead: "",
+          isFull: "",
+          entranceRate: "",
+          options: "",
+        },
+      ]);
+    }
+  };
+
+  const onSelect = async (value: any) => {
     setSingleselect(value);
     setCampaignSelected(value);
+
+    setupGroups(value);
   };
 
   const {
@@ -109,8 +290,18 @@ export default function Dashboard() {
   //   });
   // };
 
-  const setCampaignsOptions = () => {
-    const campaignsMapped = DATATABLE.map((campaign) => {
+  const setCampaignsOptions = async () => {
+    let campaignsListLocal = campaignsList;
+    if (!campaignsListLocal.length) {
+      const fetchCampaignsResult = await getCampaignsList(false);
+
+      if (fetchCampaignsResult?.data.length) {
+        campaignsListLocal = fetchCampaignsResult?.data;
+        dispatch(setCampaignsList(fetchCampaignsResult?.data));
+      }
+    }
+
+    const campaignsMapped = campaignsListLocal.map((campaign: any) => {
       return {
         value: campaign.id,
         label: campaign.name,
@@ -118,10 +309,22 @@ export default function Dashboard() {
       };
     });
 
-    setOptions(campaignsMapped);
-
     if (campaignsMapped.length) {
+      if (selectedCampaignId) {
+        const selectedCampaign = campaignsMapped.find(
+          (campaign: any) => campaign.id === selectedCampaignId
+        );
+
+        if (selectedCampaign) {
+          onSelect(selectedCampaign);
+
+          return setOptions(campaignsMapped);
+        }
+      }
+
       onSelect(campaignsMapped[0]);
+
+      return setOptions(campaignsMapped);
     }
   };
 
@@ -260,7 +463,11 @@ export default function Dashboard() {
                     <div className="pb-0 mt-0">
                       <div className="d-flex">
                         <h4 className="tx-22 font-weight-semibold mb-2">
-                          {campaignSelected.data.endDate}
+                          {toDateTime(
+                            campaignSelected.data.endDate["_seconds"] + 10800
+                          )
+                            .toLocaleString("pt-BR")
+                            .substring(0, 10)}
                         </h4>
                       </div>
                     </div>
@@ -323,10 +530,18 @@ export default function Dashboard() {
       {/* <!-- row  --> */}
       <Row>
         <Col sm={12} className="col-12 d-flex justify-content-end">
-          <Button variant="" className="btn me-2 btn-primary mb-4">
+          <Button
+            onClick={() => navigateToNewGroup()}
+            variant=""
+            className="btn me-2 btn-primary mb-4"
+          >
             Cadastrar Grupo
           </Button>
-          <Button variant="" className="btn me-2 btn-secondary mb-4">
+          <Button
+            onClick={() => navigateToNewGroup()}
+            variant=""
+            className="btn me-2 btn-secondary mb-4"
+          >
             Cadastrar vários grupos
           </Button>
         </Col>

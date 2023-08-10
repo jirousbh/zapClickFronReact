@@ -1,10 +1,12 @@
-import {combineReducers} from "redux";
+import { combineReducers } from "redux";
 import { cartreducer } from "./reducer";
-
+import { campaignReducer } from "./campaign";
+import { groupReducer } from "./groups";
 
 const rootred = combineReducers({
-    cartreducer
+  cartreducer,
+  campaignReducer,
+  groupReducer,
 });
 
-
-export default rootred
+export default rootred;

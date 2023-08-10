@@ -16557,15 +16557,15 @@ a.tag-addon:hover {
 }
 
 :root {
-    --primary: #2C7BE5;
-    --primary-bg-color: #2C7BE5;
-    --primary-bg-hover: #6ba2ec;
-    --primary-bg-border: #276ece;
-    --primary02: rgba(44, 123, 229, 0.2);
-    --primary05: rgba(44, 123, 229, 0.5);
-    --primary-transparentcolor: rgba(44, 123, 229, 0.2);
+    --primary: 	#25d366;
+    --primary-bg-color: 	#25d366;
+    --primary-bg-hover: #dcf8c6;
+    --primary-bg-border: #128c7e;
+    --primary02: rgba(37, 211, 102, 0.2);
+    --primary05: rgba(37, 211, 102, 0.5);
+    --primary-transparentcolor: rgba(37, 211, 102, 0.2);
     --transparentprimary-transparentcolor: rgba(255, 255, 255, 0.05);
-    --transparent-body: #276ece;
+    --transparent-body: #128c7e;
     --transparent-theme: rgba(0, 0, 0, 0.1);
     --blue: var(--primary-bg-color);
     --indigo: var(--primary-bg-color);

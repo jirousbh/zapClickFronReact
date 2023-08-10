@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useState } from "react";
 
+import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
   useTable,
@@ -9,7 +10,6 @@ import {
   usePagination,
 } from "react-table";
 import {
-  Breadcrumb,
   Col,
   Row,
   Card,
@@ -17,24 +17,30 @@ import {
   Form,
   OverlayTrigger,
   Tooltip,
-  ProgressBar,
+  Spinner,
+  Modal,
 } from "react-bootstrap";
 
-import * as Dashboarddata from "./data";
-import { COLUMNS, DATATABLE, GlobalFilter } from "./data";
+import {
+  setCampaignsList,
+  setSelectedCampaignId,
+} from "../../../redux/actions/campaign";
 
-import * as FirebaseService from "../../../services/FirebaseService";
+import { COLUMNS, GlobalFilter } from "./data";
+
 import { toDateTime } from "../../../utils/dates";
-import { auth } from "../../../Firebase/firebase";
+import { getCampaignsList } from "../../../services/CampaignsService";
 
 export default function Dashboard() {
   let navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [showHidden, setShowHidden] = useState(false);
   const [showEndedCampaigns, setShowEndedCampaigns] = useState(false);
 
+  const [error, setError] = useState(false);
+
   const [loadingCampaigns, setLoadingCampaigns] = useState(false);
-  const [campaignsList, setCampaignsList] = useState([]);
+  const [campaignsListLocal, setCampaignsListLocal] = useState([]);
 
   const [topCardsInfo, setTopCardsInfo] = useState({
     totalCampaigns: 0,
@@ -46,7 +52,7 @@ export default function Dashboard() {
   const tableInstance = useTable(
     {
       columns: COLUMNS,
-      data: campaignsList,
+      data: campaignsListLocal,
     },
     useGlobalFilter,
     useSortBy,
@@ -73,23 +79,35 @@ export default function Dashboard() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
-  const navigateToCreateNewCampaign = () => {
+  const navigateToNewCampaign = (
+    isEdit: boolean = false,
+    seletedCampaignId = null
+  ) => {
     let path = `${process.env.PUBLIC_URL}/new-campaign/`;
+
+    if (isEdit && seletedCampaignId) {
+      dispatch(setSelectedCampaignId(seletedCampaignId));
+    } else {
+      dispatch(setSelectedCampaignId(null));
+    }
+
     navigate(path);
   };
 
-  const navigateToEditCampaign = () => {};
+  const navigateTo = (navigateToPath: string, seletedCampaignId = null) => {
+    let path = `${process.env.PUBLIC_URL}/${navigateToPath}`;
 
-  const navigateToCampaignGroups = () => {};
+    dispatch(setSelectedCampaignId(seletedCampaignId));
 
-  const navigateToCampaignMessages = () => {};
-
-  const navigateToLeads = () => {};
+    navigate(path);
+  };
 
   const setupProjectList = function (data, admin = false) {
     // const user = auth.onAuthStateChanged((user) => console.log("user", user));
 
     if (data.length) {
+      dispatch(setCampaignsList(data));
+
       const campaignsUpdated = data.map((campaign) => {
         return {
           id: campaign.id,
@@ -126,7 +144,7 @@ export default function Dashboard() {
               >
                 <Link
                   to="#"
-                  onClick={navigateToCampaignGroups}
+                  onClick={() => navigateTo("campaign-groups/", campaign.id)}
                   className="btn btn-primary btn-sm rounded-11 me-2"
                 >
                   <i className="fa fa-users"></i>
@@ -141,7 +159,7 @@ export default function Dashboard() {
                   >
                     <Link
                       to="#"
-                      onClick={navigateToEditCampaign}
+                      onClick={() => navigateTo("campaign-leads/", campaign.id)}
                       className="btn bg-green btn-sm rounded-11 me-2"
                     >
                       <i className="fa fa-magnet"></i>
@@ -154,7 +172,9 @@ export default function Dashboard() {
                   >
                     <Link
                       to="#"
-                      onClick={navigateToEditCampaign}
+                      onClick={() =>
+                        navigateTo("project-messages/", campaign.id)
+                      }
                       className="btn bg-green btn-sm rounded-11 me-2"
                     >
                       <i className="fa fa-comment-dots"></i>
@@ -170,7 +190,7 @@ export default function Dashboard() {
                 >
                   <Link
                     to="#"
-                    onClick={navigateToEditCampaign}
+                    onClick={() => navigateToNewCampaign(true, campaign.id)}
                     className="btn bg-yellow btn-sm rounded-11"
                   >
                     <i className="fa fa-edit"></i>
@@ -182,7 +202,7 @@ export default function Dashboard() {
         };
       });
 
-      setCampaignsList(campaignsUpdated);
+      setCampaignsListLocal(campaignsUpdated);
 
       const activeCampaigns = data.filter((campaign) => {
         const projEndDate = new Date(campaign.endDate._seconds * 1000);
@@ -205,7 +225,7 @@ export default function Dashboard() {
         totalClicks,
       });
     } else {
-      setCampaignsList([
+      setCampaignsListLocal([
         {
           id: 0,
           name: "Nenhum Dado Encontrado...",
@@ -225,14 +245,34 @@ export default function Dashboard() {
   };
 
   const loadCampaigns = async function (showEnded: boolean = false) {
-    const fetchProjResult = await FirebaseService.callFirebaseFunction(
-      "fetchProjects",
-      {
-        showEnded,
-      }
-    );
+    setLoadingCampaigns(true);
 
-    setupProjectList(fetchProjResult.data, false);
+    try {
+      const fetchProjResult = await getCampaignsList(showEnded);
+
+      setupProjectList(fetchProjResult.data, false);
+    } catch (error) {
+      setError(true);
+
+      setCampaignsListLocal([
+        {
+          id: 0,
+          name: "Erro ao buscar as campanhas...",
+          entryLink: "",
+          description: "",
+          companyId: "",
+          company: "",
+          clientId: "",
+          client: "",
+          maxClicks: "",
+          endDate: "",
+          endDateLabel: "",
+          options: "",
+        },
+      ]);
+    } finally {
+      setLoadingCampaigns(false);
+    }
   };
 
   const handleEndedCampaigns = () => {
@@ -243,6 +283,17 @@ export default function Dashboard() {
   useEffect(() => {
     loadCampaigns();
   }, []);
+
+  const LoadingSpinner = () => (
+    <Spinner
+      animation="border"
+      variant="primary"
+      className="spinner-border me-2 text-primary"
+      role="status"
+    >
+      <span className="sr-only">Carregando...</span>
+    </Spinner>
+  );
 
   return (
     <React.Fragment>
@@ -269,7 +320,11 @@ export default function Dashboard() {
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
                       <h4 className="tx-22 font-weight-semibold mb-2">
-                        {topCardsInfo.totalCampaigns}
+                        {!loadingCampaigns ? (
+                          topCardsInfo.totalCampaigns
+                        ) : (
+                          <LoadingSpinner />
+                        )}
                       </h4>
                     </div>
                   </div>
@@ -294,7 +349,11 @@ export default function Dashboard() {
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
                       <h4 className="tx-22 font-weight-semibold mb-2">
-                        {topCardsInfo.activeCampaigns}
+                        {!loadingCampaigns ? (
+                          topCardsInfo.activeCampaigns
+                        ) : (
+                          <LoadingSpinner />
+                        )}
                       </h4>
                     </div>
                   </div>
@@ -319,7 +378,11 @@ export default function Dashboard() {
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
                       <h4 className="tx-22 font-weight-semibold mb-2">
-                        {topCardsInfo.totalLinks}
+                        {!loadingCampaigns ? (
+                          topCardsInfo.totalLinks
+                        ) : (
+                          <LoadingSpinner />
+                        )}
                       </h4>
                     </div>
                   </div>
@@ -344,7 +407,11 @@ export default function Dashboard() {
                   <div className="pb-0 mt-0">
                     <div className="d-flex">
                       <h4 className="tx-22 font-weight-semibold mb-2">
-                        {topCardsInfo.totalClicks}
+                        {!loadingCampaigns ? (
+                          topCardsInfo.totalClicks
+                        ) : (
+                          <LoadingSpinner />
+                        )}
                       </h4>
                     </div>
                   </div>
@@ -367,8 +434,9 @@ export default function Dashboard() {
           <Button
             variant=""
             className="btn me-2 btn-primary mb-4"
-            onClick={() => navigateToCreateNewCampaign()}
+            onClick={() => navigateToNewCampaign()}
           >
+            <i className="fas fa-plus me-2"></i>
             Criar Campanha
           </Button>
         </Col>
@@ -543,6 +611,42 @@ export default function Dashboard() {
           </Card>
         </Col>
       </Row>
+
+      <Modal show={error}>
+        <Modal.Header>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={() => setError(false)}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="tx-center">
+            {" "}
+            <i className="icon icon ion-ios-close-circle-outline tx-100 tx-danger lh-1 mg-t-20 d-inline-block"></i>{" "}
+            <h4 className="tx-danger mg-b-20">
+              Erro ao buscar a lista de campanhas
+            </h4>{" "}
+            <p className="mg-b-20 mg-x-20">
+              Desculpe, ocorreu um erro ao tentar buscar a lista de campanhas.
+              <br />
+              Por favor tente novamente, caso o erro continue, entre em contato
+              com o admiistrador do sitema.
+            </p>
+            <Button
+              variant=""
+              aria-label="Close"
+              className="btn ripple btn-danger pd-x-25"
+              type="button"
+              onClick={() => setError(false)}
+            >
+              Fechar
+            </Button>{" "}
+          </div>
+        </Modal.Body>
+      </Modal>
     </React.Fragment>
   );
 }
