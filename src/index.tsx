@@ -26,6 +26,7 @@ const Instances = React.lazy(() => import("./Pages/Instances"));
 const Users = React.lazy(() => import("./Pages/Users"));
 const NewCampaign = React.lazy(() => import("./Pages/NewCampaign"));
 const NewGroup = React.lazy(() => import("./Pages/NewGroup"));
+const Jobs = React.lazy(() => import("./Pages/Jobs"));
 // End Correct Screens
 
 const Dashboard2 = React.lazy(
@@ -407,6 +408,10 @@ root.render(
               <Route
                 path={`${process.env.PUBLIC_URL}/new-group`}
                 element={<NewGroup />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/jobs`}
+                element={<Jobs />}
               />
               {/* <Route
               path={`${process.env.PUBLIC_URL}/dashboard/dashboard-1`}

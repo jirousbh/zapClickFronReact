@@ -19,6 +19,8 @@ export default function Header() {
   const [Lang, setLang] = React.useState(false);
   const [fullscreens, setFullscreen] = React.useState(true);
 
+  const [userData, setUserData] = React.useState<any>(null);
+
   // FullScreen
   var elem: any = document.documentElement;
   const Fullscreen: any = (vale: any) => {
@@ -77,40 +79,32 @@ export default function Header() {
 
   // console.log(getdata);
 
-  const compare = () => {
-    let comparedata = getdata.map((e: any) => {
-      console.log(e, id);
-      return e.id === id;
-    });
-    setData(comparedata);
-    console.log(comparedata, Data);
-  };
-
-  React.useEffect(() => {
-    compare();
-    // eslint-disable-next-line
-  }, [id]);
   const ondelete = (id: any) => {
     dispatch(Delete(id));
   };
 
-  function total() {
-    let price = 0;
-    getdata.map((ele: any) => {
-      price = ele.price * ele.qnty + price;
-      return price;
-    });
-    setPrice(price);
-  }
+  const loadUserData = () => {
+    auth.onAuthStateChanged((user) => setUserData(user));
+  };
 
   React.useEffect(() => {
-    total();
+    loadUserData();
   });
+
   let navigate = useNavigate();
+
   const routeChange = () => {
     let path = `${process.env.PUBLIC_URL}/`;
     navigate(path);
   };
+
+  const getInitial = () => {
+    if (!userData && !userData?.displayName && !userData?.displayName.lenght)
+      return "";
+
+    return userData?.displayName?.substring(0, 1).toUpperCase();
+  };
+
   return (
     <Navbar className="main-header side-header sticky nav nav-item">
       <div className="main-container container-fluid">
@@ -1194,29 +1188,22 @@ export default function Header() {
                     className="new nav-link profile-user d-flex"
                     variant=""
                   >
-                    <img
-                      alt=""
-                      src={require("../../assets/img/faces/2.jpg")}
-                      className=""
-                    />
+                    <div className="avatar bg-primary rounded-circle">
+                      {getInitial()}
+                    </div>
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
                     <div className="menu-header-content p-3 border-bottom">
                       <div className="d-flex wd-100p">
-                        <div className="main-img-user">
-                          <img
-                            alt=""
-                            src={require("../../assets/img/faces/2.jpg")}
-                            className=""
-                          />
+                        <div className="avatar bg-primary rounded-circle">
+                          {getInitial()}
                         </div>
                         <div className="ms-3 my-auto">
-                          <h6 className="tx-15 font-weight-semibold mb-0">
-                            Teste
-                          </h6>
-                          {/* <span className="dropdown-title-text subtext op-6  tx-12">
-                            Premium Member
-                          </span> */}
+                          <span className="dropdown-title-text subtext op-6  tx-12">
+                            {userData && userData.displayName
+                              ? userData.displayName
+                              : ""}
+                          </span>
                         </div>
                       </div>
                     </div>
