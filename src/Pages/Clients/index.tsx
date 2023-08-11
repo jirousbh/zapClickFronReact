@@ -1,22 +1,59 @@
 import React, { useRef, useEffect, useState } from "react";
+
 import ReactApexChart from "react-apexcharts";
+import Select, { SingleValue } from "react-select";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Breadcrumb,
+  Col,
+  Row,
+  Card,
+  Button,
+  Modal,
+  Form,
+} from "react-bootstrap";
 import {
   useTable,
   useSortBy,
   useGlobalFilter,
   usePagination,
 } from "react-table";
-import Select, { SingleValue } from "react-select";
-import { Breadcrumb, Col, Row, Card, Button } from "react-bootstrap";
 
-import {
-  COLUMNS,
-  DATATABLE,
-  GlobalFilter,
-} from "../../components/Dashboard/Dashboard-1/data";
+import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
+
+import { auth } from "../../Firebase/firebase";
+
+import { setCompaniesList } from "../../redux/actions/companies";
+
 import { CLIENTS_COLUMNS } from "./ClientsTableConfig";
 
+import { getCompaniesList } from "../../services/CompaniesService";
+import { createClient, editClient } from "../../services/ClientsService";
+
 export default function Clients() {
+  const dispatch = useDispatch();
+
+  const companiesList = useSelector(
+    (state: any) => state.companiesReducer.companiesList
+  );
+
+  const [singleselect, setSingleselect] = useState<SingleValue<number>>(null);
+  const [companiesOptions, setCompaniesOptions] = useState<any>([]);
+
+  const [newClientModal, setNewClientModal] = useState(false);
+
+  const [data, setData] = useState({
+    id: "",
+    name: "",
+    email: "",
+  });
+
+  const { id, name, email } = data;
+
+  const changeHandler = (e: any) => {
+    setData({ ...data, [e.target.name]: e.target.value });
+  };
+
   const tableInstance = useTable(
     {
       columns: CLIENTS_COLUMNS,
@@ -47,6 +84,54 @@ export default function Clients() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
+  const setupCompaniesList = () => {
+    auth.onAuthStateChanged(async (user) => {
+      let companiesListLocal = companiesList;
+      if (!companiesListLocal.length) {
+        const fetchCompaniesResult = await getCompaniesList(user?.email);
+
+        if (fetchCompaniesResult?.data.length) {
+          companiesListLocal = fetchCompaniesResult?.data;
+          dispatch(setCompaniesList(fetchCompaniesResult?.data));
+        }
+      }
+
+      const companiesMapped = companiesListLocal.map((company: any) => {
+        return {
+          value: company.id,
+          label: company.name,
+          data: company,
+        };
+      });
+
+      if (companiesMapped.length) {
+        setSingleselect(companiesMapped[0]);
+
+        return setCompaniesOptions(companiesMapped);
+      }
+    });
+  };
+
+  const saveCompany = () => {
+    if (!singleselect) return;
+
+    try {
+      id
+        ? // @ts-ignore
+          createClient({ name, company: singleselect.id, email })
+        : // @ts-ignore
+          editClient({ id, name, company: singleselect.id, email });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setNewClientModal(false);
+    }
+  };
+
+  useEffect(() => {
+    setupCompaniesList();
+  }, []);
+
   return (
     <React.Fragment>
       <div className="breadcrumb-header justify-content-between">
@@ -59,7 +144,11 @@ export default function Clients() {
       {/* <!-- row  --> */}
       <Row>
         <Col sm={12} className="col-12 d-flex justify-content-end">
-          <Button variant="" className="btn me-2 tx-18 btn-primary mb-4">
+          <Button
+            variant=""
+            className="btn me-2 tx-18 btn-primary mb-4"
+            onClick={() => setNewClientModal(true)}
+          >
             Cadastrar Cliente
           </Button>
         </Col>
@@ -214,6 +303,90 @@ export default function Clients() {
             </Card.Body>
           </Card>
         </Col>
+
+        <Modal show={newClientModal}>
+          <Modal.Header>
+            <Modal.Title>Cadastrar cliente</Modal.Title>
+            <Button
+              variant=""
+              className="btn btn-close"
+              onClick={() => setNewClientModal(false)}
+            >
+              x
+            </Button>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="">
+              {" "}
+              <Row className="mb-2">
+                <Col lg={12}>
+                  <Form.Group className="form-group">
+                    <Form.Label className="">Nome</Form.Label>{" "}
+                    <Form.Control
+                      className="form-control"
+                      placeholder="Nome do cliente"
+                      name="name"
+                      type="text"
+                      value={name}
+                      onChange={changeHandler}
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-2">
+                <Col lg={12}>
+                  <Form.Group className="form-group">
+                    <Form.Label className="">Email</Form.Label>{" "}
+                    <Form.Control
+                      className="form-control"
+                      placeholder="Email"
+                      name="name"
+                      type="text"
+                      value={name}
+                      onChange={changeHandler}
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-2">
+                <Col lg={12}>
+                  <div className="mb-4">
+                    <p className="mg-b-10">Empresa</p>
+                    <div className=" SlectBox">
+                      <Select
+                        defaultValue={singleselect}
+                        onChange={setSingleselect}
+                        options={companiesOptions}
+                        placeholder="Selecione uma empresa"
+                        classNamePrefix="selectform"
+                      />
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+              <Button
+                variant=""
+                aria-label="Confirm"
+                className="btn ripple btn-primary pd-x-25"
+                type="button"
+                onClick={() => saveCompany()}
+              >
+                Confirmar
+              </Button>{" "}
+              <Button
+                variant=""
+                aria-label="Close"
+                className="btn ripple btn-danger pd-x-25"
+                type="button"
+                onClick={() => setNewClientModal(false)}
+              >
+                Fechar
+              </Button>{" "}
+            </div>
+          </Modal.Body>
+        </Modal>
       </Row>
     </React.Fragment>
   );

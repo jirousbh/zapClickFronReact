@@ -25,11 +25,7 @@ import {
 
 import { auth } from "../../Firebase/firebase";
 
-import {
-  COLUMNS,
-  DATATABLE,
-  GlobalFilter,
-} from "../../components/Dashboard/Dashboard-1/data";
+import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 
 import { setCompaniesList } from "../../redux/actions/companies";
 import { setInstancesList } from "../../redux/actions/instances";

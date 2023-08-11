@@ -7,20 +7,61 @@ import {
   usePagination,
 } from "react-table";
 import Select, { SingleValue } from "react-select";
-import { Breadcrumb, Col, Row, Card, Button } from "react-bootstrap";
-
 import {
-  COLUMNS,
-  DATATABLE,
-  GlobalFilter,
-} from "../../components/Dashboard/Dashboard-1/data";
+  Breadcrumb,
+  Col,
+  Row,
+  Card,
+  Button,
+  Modal,
+  Form,
+} from "react-bootstrap";
+
+import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 import { COMPANIES_COLUMNS } from "./CompaniesTableConfig";
+import { auth } from "../../Firebase/firebase";
+import {
+  createCompany,
+  editCompany,
+  getCompaniesList,
+} from "../../services/CompaniesService";
+import { setCompaniesList } from "../../redux/actions/companies";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function Companies() {
+  const dispatch = useDispatch();
+
+  const companiesList = useSelector(
+    (state: any) => state.companiesReducer.companiesList
+  );
+
+  const [newCompanyModal, setNewCompanyModal] = useState(false);
+
+  const [data, setData] = useState({
+    id: "",
+    name: "",
+  });
+
+  const { id, name } = data;
+
+  const saveCompany = () => {
+    try {
+      id ? createCompany({ name }) : editCompany({ id, name });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setNewCompanyModal(false);
+    }
+  };
+
+  const changeHandler = (e: any) => {
+    setData({ ...data, [e.target.name]: e.target.value });
+  };
+
   const tableInstance = useTable(
     {
       columns: COMPANIES_COLUMNS,
-      data: [],
+      data: companiesList,
     },
     useGlobalFilter,
     useSortBy,
@@ -47,6 +88,24 @@ export default function Companies() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
+  const setupCompaniesList = () => {
+    auth.onAuthStateChanged(async (user) => {
+      let companiesListLocal = companiesList;
+      if (!companiesListLocal.length) {
+        const fetchCompaniesResult = await getCompaniesList(user?.email);
+
+        if (fetchCompaniesResult?.data.length) {
+          companiesListLocal = fetchCompaniesResult?.data;
+          dispatch(setCompaniesList(fetchCompaniesResult?.data));
+        }
+      }
+    });
+  };
+
+  useEffect(() => {
+    setupCompaniesList();
+  }, []);
+
   return (
     <React.Fragment>
       <div className="breadcrumb-header justify-content-between">
@@ -59,7 +118,11 @@ export default function Companies() {
       {/* <!-- row  --> */}
       <Row>
         <Col sm={12} className="col-12 d-flex justify-content-end">
-          <Button variant="" className="btn me-2 tx-18 btn-primary mb-4">
+          <Button
+            variant=""
+            className="btn me-2 tx-18 btn-primary mb-4"
+            onClick={() => setNewCompanyModal(true)}
+          >
             Cadastrar Empresa
           </Button>
         </Col>
@@ -214,6 +277,58 @@ export default function Companies() {
             </Card.Body>
           </Card>
         </Col>
+
+        <Modal show={newCompanyModal}>
+          <Modal.Header>
+            <Modal.Title>Cadastrar empresa cliente</Modal.Title>
+            <Button
+              variant=""
+              className="btn btn-close"
+              onClick={() => setNewCompanyModal(false)}
+            >
+              x
+            </Button>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="">
+              {" "}
+              <Row className="mb-4">
+                <Col lg={12}>
+                  <Form.Group className="form-group">
+                    <Form.Label className="">Nome</Form.Label>{" "}
+                    <Form.Control
+                      className="form-control"
+                      placeholder="Nome da empresa"
+                      name="name"
+                      type="text"
+                      value={name}
+                      onChange={changeHandler}
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Button
+                variant=""
+                aria-label="Confirm"
+                className="btn ripple btn-primary pd-x-25"
+                type="button"
+                onClick={() => saveCompany()}
+              >
+                Confirmar
+              </Button>{" "}
+              <Button
+                variant=""
+                aria-label="Close"
+                className="btn ripple btn-danger pd-x-25"
+                type="button"
+                onClick={() => setNewCompanyModal(false)}
+              >
+                Fechar
+              </Button>{" "}
+            </div>
+          </Modal.Body>
+        </Modal>
       </Row>
     </React.Fragment>
   );

@@ -18,15 +18,11 @@ import {
 import { Link } from "react-router-dom";
 import QRCodeStyling from "qr-code-styling";
 
-import * as Dashboarddata from "../../components/Dashboard/Dashboard-1/data";
-import {
-  COLUMNS,
-  DATATABLE,
-  GlobalFilter,
-} from "../../components/Dashboard/Dashboard-1/data";
+import * as Dashboarddata from "../Dashboard/data";
+import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 import { LEADS_COLUMNS } from "./CampaignLeadsTableConfig";
 
-export default function Dashboard() {
+export default function CampaignLeads() {
   const [campaignSelected, setCampaignSelected] = useState<any>(null);
   const [singleselect, setSingleselect] = useState<SingleValue<number>>(null);
   const [options, setOptions] = useState<any>([]);

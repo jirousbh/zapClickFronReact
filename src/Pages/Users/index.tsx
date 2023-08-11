@@ -9,11 +9,7 @@ import {
 import Select, { SingleValue } from "react-select";
 import { Breadcrumb, Col, Row, Card, Button } from "react-bootstrap";
 
-import {
-  COLUMNS,
-  DATATABLE,
-  GlobalFilter,
-} from "../../components/Dashboard/Dashboard-1/data";
+import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 import { USERS_COLUMNS } from "./UsersTableConfig";
 
 export default function Users() {

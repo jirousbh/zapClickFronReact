@@ -1,7 +1,7 @@
 {
   "name": "nowa",
   "version": "0.1.0",
-  "homepage": "https://react.spurko.com/nowa-ts/preview/",
+  "homepage": "",
   "private": true,
   "dependencies": {
     "@coreui/react": "^4.3.1",

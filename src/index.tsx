@@ -14,9 +14,7 @@ const Custompages = React.lazy(
 );
 
 // Correct Screens
-const Dashboard = React.lazy(
-  () => import("./components/Dashboard/Dashboard-1/Dashboard")
-);
+const Dashboard = React.lazy(() => import("./Pages/Dashboard/Dashboard"));
 const Groups = React.lazy(() => import("./Pages/Groups"));
 const Shorteners = React.lazy(() => import("./Pages/Shorteners"));
 const CampaignLeads = React.lazy(() => import("./Pages/CampaignLeads"));
@@ -27,6 +25,7 @@ const Users = React.lazy(() => import("./Pages/Users"));
 const NewCampaign = React.lazy(() => import("./Pages/NewCampaign"));
 const NewGroup = React.lazy(() => import("./Pages/NewGroup"));
 const Jobs = React.lazy(() => import("./Pages/Jobs"));
+const ShortenerNew = React.lazy(() => import("./Pages/ShortenerNew"));
 const SendingBulkMessagesApi = React.lazy(
   () => import("./Pages/SendingBulkMessagesApi")
 );
@@ -426,6 +425,10 @@ root.render(
               <Route
                 path={`${process.env.PUBLIC_URL}/messages-local-api`}
                 element={<SendingBulkMessagesApi />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/shortener-new`}
+                element={<ShortenerNew />}
               />
               {/* <Route
               path={`${process.env.PUBLIC_URL}/dashboard/dashboard-1`}

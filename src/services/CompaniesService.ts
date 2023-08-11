@@ -15,4 +15,29 @@ const getCompaniesList = async (
   return fetchCompaniesResult;
 };
 
-export { getCompaniesList };
+const createCompany = async ({ name }: any) => {
+  const createCompaniyResult = await FirebaseService.callFirebaseFunction(
+    "createCompany",
+    {
+      name,
+    }
+  );
+
+  return createCompaniyResult;
+};
+
+const editCompany = async ({ company, name }: any) => {
+  const createCompaniyResult = await FirebaseService.callFirebaseFunction(
+    "editCompany",
+    {
+      company,
+      changes: {
+        name,
+      },
+    }
+  );
+
+  return createCompaniyResult;
+};
+
+export { getCompaniesList, createCompany, editCompany };

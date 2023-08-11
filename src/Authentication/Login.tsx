@@ -35,7 +35,16 @@ const SignIn = () => {
       })
       .catch((err) => {
         console.log(err);
-        setError(err.message);
+
+        let errmsg = err.message;
+        if (err.code == "auth/wrong-password")
+          errmsg = "Senha inválida. Tente novamente";
+        else if (err.code == "auth/user-not-found")
+          errmsg = "Usuário não encontrado";
+        else if (err.code == "auth/email-already-in-use")
+          errmsg = "Este e-mail já é utlizado por outra conta.";
+
+        setError(errmsg);
       });
   };
 

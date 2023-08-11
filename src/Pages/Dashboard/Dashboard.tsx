@@ -24,12 +24,12 @@ import {
 import {
   setCampaignsList,
   setSelectedCampaignId,
-} from "../../../redux/actions/campaign";
+} from "../../redux/actions/campaign";
 
 import { COLUMNS, GlobalFilter } from "./data";
 
-import { toDateTime } from "../../../utils/dates";
-import { getCampaignsList } from "../../../services/CampaignsService";
+import { toDateTime } from "../../utils/dates";
+import { getCampaignsList } from "../../services/CampaignsService";
 
 export default function Dashboard() {
   let navigate = useNavigate();

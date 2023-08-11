@@ -22,12 +22,8 @@ import {
   Tooltip,
 } from "react-bootstrap";
 
-import * as Dashboarddata from "../../components/Dashboard/Dashboard-1/data";
-import {
-  COLUMNS,
-  DATATABLE,
-  GlobalFilter,
-} from "../../components/Dashboard/Dashboard-1/data";
+import * as Dashboarddata from "../Dashboard/data";
+import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 
 import { GROUPS_COLUMNS } from "./GroupsTableConfig";
 import {

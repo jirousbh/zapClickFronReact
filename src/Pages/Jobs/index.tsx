@@ -21,7 +21,7 @@ import {
   Modal,
 } from "react-bootstrap";
 
-import { GlobalFilter } from "../../components/Dashboard/Dashboard-1/data";
+import { GlobalFilter } from "../Dashboard/data";
 
 import { JOBS_COLUMNS } from "./JobsTableConfig";
 

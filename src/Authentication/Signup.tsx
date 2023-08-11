@@ -1,16 +1,32 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../Firebase/firebase";
-import { Button, Col, Form, FormGroup, Row, Alert } from "react-bootstrap";
+import {
+  Button,
+  Col,
+  Form,
+  FormGroup,
+  Row,
+  Alert,
+  Spinner,
+  Modal,
+} from "react-bootstrap";
 import { signUpUser } from "../services/usersService";
 const SignUp = () => {
+  let navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+
+  const [termsModalOpened, setTermsModalOpened] = useState(false);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
+
   const [err, setError] = useState("");
   const [data, setData] = React.useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    confirmRead: "",
+    confirmRead: false,
     phone: "+55",
   });
   const { email, password, name, confirmPassword, confirmRead, phone } = data;
@@ -18,36 +34,36 @@ const SignUp = () => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
 
-  const Signup = (e: any) => {
+  const routeChange = () => {
+    let path = `${process.env.PUBLIC_URL}/authentication/login`;
+    navigate(path);
+  };
+
+  const signUp = async (e: any) => {
     if (!name) setError("Você deve digitar o seu nome");
     if (!email) setError("Você deve digitar o seu email");
     if (password != confirmPassword)
       setError("Os campos de senha estão diferentes");
     if (confirmRead) setError("Você deve declarar que leu os termos de uso");
 
-    // e.preventDefault();
-    // auth
-    //   .createUserWithEmailAndPassword(email, password)
-    signUpUser({
-      name,
-      email,
-      password,
-      phone,
-    })
-      .then((user) => {
-        console.log(user);
-        routeChange();
-      })
-      .catch((err) => {
-        console.log(err);
-        setError(err.message);
+    setLoading(true);
+
+    try {
+      const result = await signUpUser({
+        name,
+        email,
+        password,
+        phone,
       });
+
+      setLoading(false);
+      routeChange();
+    } catch (error: any) {
+      setLoading(false);
+      setError(error.message);
+    }
   };
-  let navigate = useNavigate();
-  const routeChange = () => {
-    let path = `${process.env.PUBLIC_URL}/dashboard/dashboard-1/`;
-    navigate(path);
-  };
+
   return (
     <div>
       <div className="square-box">
@@ -75,7 +91,7 @@ const SignUp = () => {
                       <div className="d-flex mb-4">
                         <Link to="#">
                           <img
-                            src={require("../assets/img/brand/favicon.png")}
+                            src={require("../assets/img/brand/logo_text.png")}
                             className="sign-favicon ht-40"
                             alt="logo"
                           />
@@ -91,9 +107,10 @@ const SignUp = () => {
                           <Form>
                             <FormGroup className="form-group">
                               <label>Qual é o Seu nome?</label>{" "}
+                              <span className="text-danger">*</span>
                               <Form.Control
                                 className="form-control"
-                                placeholder="Enter your firstname and lastname"
+                                placeholder="Digite seu nome"
                                 type="text"
                                 name="name"
                                 value={name}
@@ -102,6 +119,7 @@ const SignUp = () => {
                             </FormGroup>
                             <FormGroup className="form-group">
                               <label>Qual será o seu email de acesso?</label>{" "}
+                              <span className="text-danger">*</span>
                               <Form.Control
                                 className="form-control"
                                 placeholder="Enter your email"
@@ -114,6 +132,7 @@ const SignUp = () => {
 
                             <FormGroup className="form-group">
                               <label>Crie uma senha</label>{" "}
+                              <span className="text-danger">*</span>
                               <Form.Control
                                 className="form-control"
                                 placeholder="Digite sua senha"
@@ -126,6 +145,7 @@ const SignUp = () => {
 
                             <FormGroup className="form-group">
                               <label>Confirme sua senha</label>{" "}
+                              <span className="text-danger">*</span>
                               <Form.Control
                                 className="form-control"
                                 placeholder="Repetir senha"
@@ -155,12 +175,48 @@ const SignUp = () => {
                               />
                             </div>
 
+                            <Form className="ms-auto d-flex align-items-center mb-2">
+                              <Form.Check
+                                checked={confirmRead}
+                                type="checkbox"
+                                id="custom-switch"
+                                name="confirmRead"
+                                onChange={(e) =>
+                                  setData({
+                                    ...data,
+                                    confirmRead: !confirmRead,
+                                  })
+                                }
+                              />{" "}
+                              <Form.Label className="">
+                                Declaro que li os Termos de Uso
+                                <span className="text-danger">*</span>{" "}
+                                <Link
+                                  to="#"
+                                  onClick={() => setTermsModalOpened(true)}
+                                  className="me-2 mt-1"
+                                >
+                                  (LER)
+                                </Link>
+                              </Form.Label>
+                            </Form>
+
                             <Button
                               variant=""
                               className="btn btn-primary btn-block"
-                              onClick={Signup}
+                              onClick={signUp}
                             >
-                              Cadastrar
+                              {loading ? (
+                                <Spinner
+                                  animation="border"
+                                  className="spinner-border"
+                                  role="status"
+                                >
+                                  <span className="sr-only">Salvando...</span>
+                                </Spinner>
+                              ) : (
+                                <>Cadastrar</>
+                              )}
                             </Button>
 
                             <div className="main-signup-footer mt-3 text-center ">
@@ -184,6 +240,79 @@ const SignUp = () => {
           </div>
         </div>
       </div>
+
+      {/* Terms Modal */}
+
+      <Modal show={termsModalOpened}>
+        <Modal.Header>
+          <Modal.Title>Termos de Uso</Modal.Title>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={() => {
+              setTermsModalOpened(false);
+            }}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            Ao marcar "Declaro que Li os Termos de Uso" na tela de cadastro para
+            a utilização dos serviços, o usuário estará aderindo e aceitando
+            automática e integralmente os termos e condições de uso abaixo
+            descritos. A ZapClick pode alterar, a qualquer momento, os termos e
+            condições de uso sem qualquer aviso, devendo para tanto incluir a
+            nova versão em zapclick.digital/termos.html, reservado ao cliente o
+            direito de discordância e cancelamento do serviço. as modificações
+            passarão a ser aplicáveis a partir da data de veiculação da nova
+            versão no (s) link (s) aqui especificado(s), salvo previsão
+            expressamente em contrário presente neste documento. O uso contínuo
+            do serviço por parte do usuário, após a realização de qualquer
+            mudança nos termos e condições de uso, significa que o usuário está
+            de acordo com tais modificações.
+            <br />
+            <br />
+            Ao aceitar os termos o usuário está permitindo que a ZapClick entre
+            em contato seja por SMS/Whatsapp ou outra forma de aplicação que
+            permita envio de mensagens diretamente ao cliente.
+          </p>
+        </Modal.Body>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal show={openSuccessModal}>
+        <Modal.Header>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={() => {
+              routeChange();
+            }}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="tx-center ">
+            <i className="icon ion-ios-checkmark-circle-outline tx-100 tx-success lh-1 mg-t-20 d-inline-block"></i>{" "}
+            <h4 className="tx-success tx-semibold mg-b-20">Parabéns!</h4>{" "}
+            <p className="mg-b-20 mg-x-20">
+              Sua conta foi registrada com sucesso, agora você pode entrar na
+              plataforma com o email e senha registrados.
+            </p>
+            <Button
+              variant=""
+              aria-label="Close"
+              className="btn ripple btn-success pd-x-25"
+              type="button"
+              onClick={() => routeChange()}
+            >
+              Continuar
+            </Button>{" "}
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };

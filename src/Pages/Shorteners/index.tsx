@@ -1,12 +1,14 @@
-import React, { useRef, useEffect, useState } from "react";
-import ReactApexChart from "react-apexcharts";
+import React, { useEffect, useState } from "react";
+
+import Select, { SingleValue } from "react-select";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   useTable,
   useSortBy,
   useGlobalFilter,
   usePagination,
 } from "react-table";
-import Select, { SingleValue } from "react-select";
 import {
   Breadcrumb,
   Col,
@@ -14,39 +16,51 @@ import {
   Card,
   Button,
   ProgressBar,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import QRCodeStyling from "qr-code-styling";
 
-import * as Dashboarddata from "../../components/Dashboard/Dashboard-1/data";
-import {
-  COLUMNS,
-  DATATABLE,
-  GlobalFilter,
-} from "../../components/Dashboard/Dashboard-1/data";
+import { GlobalFilter } from "../Dashboard/data";
+
+import { setCampaignsList } from "../../redux/actions/campaign";
+import { setSelectedUtm } from "../../redux/actions/shorteners";
+
 import { SHORTENERS_COLUMNS } from "./ShortenersTableConfig";
 
+import { getCampaignsList } from "../../services/CampaignsService";
+import {
+  deleteShortener,
+  getShortenersList,
+} from "../../services/ShortenersService";
+
 export default function Dashboard() {
+  let navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const campaignsList = useSelector(
+    (state: any) => state.campaignReducer.campaignsList
+  );
+  const selectedCampaignId = useSelector(
+    (state: any) => state.campaignReducer.selectedCampaignId
+  );
+
+  const [loading, setLoading] = useState<any>(false);
+
   const [campaignSelected, setCampaignSelected] = useState<any>(null);
   const [singleselect, setSingleselect] = useState<SingleValue<number>>(null);
   const [options, setOptions] = useState<any>([]);
 
-  const qrCodeRef = useRef<HTMLElement | undefined>();
+  const [shortenersList, setShortenersList] = useState<any>([]);
 
   const tableInstance = useTable(
     {
       columns: SHORTENERS_COLUMNS,
-      data: [],
+      data: shortenersList,
     },
     useGlobalFilter,
     useSortBy,
     usePagination
   );
-
-  const onSelect = (value: any) => {
-    setSingleselect(value);
-    setCampaignSelected(value);
-  };
 
   const {
     getTableProps, // table props from react-table
@@ -68,8 +82,18 @@ export default function Dashboard() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
-  const setCampaignsOptions = () => {
-    const campaignsMapped = DATATABLE.map((campaign) => {
+  const setCampaignsOptions = async () => {
+    let campaignsListLocal = campaignsList;
+    if (!campaignsListLocal.length) {
+      const fetchCampaignsResult = await getCampaignsList(false);
+
+      if (fetchCampaignsResult?.data.length) {
+        campaignsListLocal = fetchCampaignsResult?.data;
+        dispatch(setCampaignsList(fetchCampaignsResult?.data));
+      }
+    }
+
+    const campaignsMapped = campaignsListLocal.map((campaign: any) => {
       return {
         value: campaign.id,
         label: campaign.name,
@@ -77,15 +101,142 @@ export default function Dashboard() {
       };
     });
 
-    setOptions(campaignsMapped);
-
     if (campaignsMapped.length) {
-      //   onSelect(campaignsMapped[0]);
+      if (selectedCampaignId) {
+        const selectedCampaign = campaignsMapped.find(
+          (campaign: any) => campaign.id === selectedCampaignId
+        );
+
+        if (selectedCampaign) {
+          onSelect(selectedCampaign);
+
+          return setOptions(campaignsMapped);
+        }
+      }
+
+      return setOptions(campaignsMapped);
     }
   };
 
+  const goToCreate = (isEdit: boolean = false, link: any = null) => {
+    let path = `${process.env.PUBLIC_URL}/shortener-new/`;
+
+    if (isEdit && link) {
+      dispatch(setSelectedUtm(link));
+    } else {
+      dispatch(setSelectedUtm(null));
+    }
+
+    navigate(path);
+  };
+
+  const deleteUtm = async (shortId: number) => {
+    try {
+      await deleteShortener({
+        projectId: campaignSelected.id,
+        shortId,
+      });
+
+      await setupShorteners(campaignSelected);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const setupShorteners = async (campaign: any) => {
+    try {
+      setLoading(true);
+
+      const shortenersResponse = await getShortenersList(campaign.id);
+
+      if (shortenersResponse?.data?.length) {
+        const shortenersList = shortenersResponse?.data?.map((utm: any) => {
+          return {
+            id: utm.id,
+            url:
+              "<a href='https://wtzp.link/e/" +
+              utm.url +
+              "' target='_blank'>https://wtzp.link/e/" +
+              utm.url +
+              "</a>",
+            utm_source: utm.utm_source,
+            utm_medium: utm.utm_medium,
+            utm_campaign: utm.utm_campaign,
+            utm_term: utm.utm_term,
+            utm_content: utm.utm_content,
+            options: (
+              <>
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Editar Link UTM</Tooltip>}
+                >
+                  <Button
+                    variant=""
+                    className="btn ripple bg-yellow btn-sm rounded-11 me-2"
+                    onClick={() => goToCreate(true, utm)}
+                  >
+                    <i className="fa fa-edit"></i>
+                  </Button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Editar Link UTM</Tooltip>}
+                >
+                  <Button
+                    variant=""
+                    className="btn ripple bg-yellow btn-sm rounded-11 me-2"
+                    onClick={() => deleteUtm(utm.id)}
+                  >
+                    <i className="fa fa-trash"></i>
+                  </Button>
+                </OverlayTrigger>
+              </>
+            ),
+          };
+        });
+
+        setShortenersList(shortenersList);
+      } else {
+        setShortenersList([
+          {
+            id: 0,
+            url: "Nenhum Dado Encontrado...",
+            utm_source: "",
+            utm_medium: "",
+            utm_campaign: "",
+            utm_term: "",
+            utm_content: "",
+            options: "",
+          },
+        ]);
+      }
+    } catch (error) {
+      setShortenersList([
+        {
+          id: 0,
+          url: "Erro ao buscar os links...",
+          utm_source: "",
+          utm_medium: "",
+          utm_campaign: "",
+          utm_term: "",
+          utm_content: "",
+          options: "",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSelect = async (value: any) => {
+    setSingleselect(value);
+    setCampaignSelected(value);
+
+    setupShorteners(value);
+  };
+
   useEffect(() => {
-    // setCampaignsOptions();
+    setCampaignsOptions();
   }, []);
 
   return (
@@ -124,7 +275,11 @@ export default function Dashboard() {
       {/* <!-- row  --> */}
       <Row>
         <Col sm={12} className="col-12 d-flex justify-content-end">
-          <Button variant="" className="btn me-2 tx-18 btn-primary mb-4">
+          <Button
+            variant=""
+            className="btn me-2 tx-18 btn-primary mb-4"
+            onClick={() => goToCreate()}
+          >
             Cadastrar Link UTM
           </Button>
         </Col>

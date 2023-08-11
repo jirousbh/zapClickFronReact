@@ -6,27 +6,27 @@ export const SHORTENERS_COLUMNS: any = [
   },
   {
     Header: "UTM Source",
-    accessor: "source",
+    accessor: "utm_source",
     className: "text-center ",
   },
   {
     Header: "UTM Medium",
-    accessor: "medium",
+    accessor: "utm_medium",
     className: "text-center ",
   },
   {
     Header: "UTM Campaign",
-    accessor: "utmCampaign",
+    accessor: "utm_campaign",
     className: "text-center ",
   },
   {
     Header: "UTM Term",
-    accessor: "utmTerm",
+    accessor: "utm_term",
     className: "text-center ",
   },
   {
     Header: "UTM Content",
-    accessor: "utmContent",
+    accessor: "utm_content",
     className: "text-center ",
   },
   {
