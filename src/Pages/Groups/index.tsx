@@ -101,7 +101,7 @@ export default function Dashboard() {
     const groupsResponse = await getGroupsByCampaign(campaign.id);
 
     if (groupsResponse?.data?.length) {
-      const groupsList = groupsResponse?.data?.map((group) => {
+      const groupsList = groupsResponse?.data?.map((group: any) => {
         const urtToShow =
           group.url.length > 35
             ? group.url.substring(0, 35) + "..."

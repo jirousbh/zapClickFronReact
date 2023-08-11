@@ -142,13 +142,13 @@ export default function Dashboard() {
                 placement="top"
                 overlay={<Tooltip>Grupos da Campanha</Tooltip>}
               >
-                <Link
-                  to="#"
+                <Button
+                  variant=""
                   onClick={() => navigateTo("campaign-groups/", campaign.id)}
                   className="btn btn-primary btn-sm rounded-11 me-2"
                 >
                   <i className="fa fa-users"></i>
-                </Link>
+                </Button>
               </OverlayTrigger>
 
               {campaign.useZapi ? (
@@ -157,46 +157,46 @@ export default function Dashboard() {
                     placement="top"
                     overlay={<Tooltip>Relatório de Leads</Tooltip>}
                   >
-                    <Link
-                      to="#"
+                    <Button
+                      variant=""
                       onClick={() => navigateTo("campaign-leads/", campaign.id)}
                       className="btn bg-green btn-sm rounded-11 me-2"
                     >
                       <i className="fa fa-magnet"></i>
-                    </Link>
+                    </Button>
                   </OverlayTrigger>
 
                   <OverlayTrigger
                     placement="top"
                     overlay={<Tooltip>Mensagens Enviadas</Tooltip>}
                   >
-                    <Link
-                      to="#"
+                    <Button
+                      variant=""
                       onClick={() =>
                         navigateTo("project-messages/", campaign.id)
                       }
                       className="btn bg-green btn-sm rounded-11 me-2"
                     >
                       <i className="fa fa-comment-dots"></i>
-                    </Link>
+                    </Button>
                   </OverlayTrigger>
                 </>
               ) : null}
 
-              {admin ? (
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip>Alterar Campanha</Tooltip>}
+              {/* {admin ? ( */}
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Alterar Campanha</Tooltip>}
+              >
+                <Button
+                  variant=""
+                  onClick={() => navigateToNewCampaign(true, campaign.id)}
+                  className="btn bg-yellow btn-sm rounded-11"
                 >
-                  <Link
-                    to="#"
-                    onClick={() => navigateToNewCampaign(true, campaign.id)}
-                    className="btn bg-yellow btn-sm rounded-11"
-                  >
-                    <i className="fa fa-edit"></i>
-                  </Link>
-                </OverlayTrigger>
-              ) : null}
+                  <i className="fa fa-edit"></i>
+                </Button>
+              </OverlayTrigger>
+              {/* ) : null} */}
             </span>
           ),
         };

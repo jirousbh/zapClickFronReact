@@ -27,6 +27,12 @@ const Users = React.lazy(() => import("./Pages/Users"));
 const NewCampaign = React.lazy(() => import("./Pages/NewCampaign"));
 const NewGroup = React.lazy(() => import("./Pages/NewGroup"));
 const Jobs = React.lazy(() => import("./Pages/Jobs"));
+const SendingBulkMessagesApi = React.lazy(
+  () => import("./Pages/SendingBulkMessagesApi")
+);
+const SendingBulkMessages = React.lazy(
+  () => import("./Pages/SendingBulkMessages")
+);
 // End Correct Screens
 
 const Dashboard2 = React.lazy(
@@ -412,6 +418,14 @@ root.render(
               <Route
                 path={`${process.env.PUBLIC_URL}/jobs`}
                 element={<Jobs />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/messages`}
+                element={<SendingBulkMessages />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/messages-local-api`}
+                element={<SendingBulkMessagesApi />}
               />
               {/* <Route
               path={`${process.env.PUBLIC_URL}/dashboard/dashboard-1`}

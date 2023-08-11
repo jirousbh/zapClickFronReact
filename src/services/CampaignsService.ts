@@ -42,4 +42,25 @@ const getCampaignsList = async (showEnded: boolean = false) => {
   };
 };
 
-export { getCampaignsList };
+const createCampaign = async (newCampaignData: any) => {
+  const response = await FirebaseService.callFirebaseFunction("createProject", {
+    project: {
+      ...newCampaignData,
+    },
+  });
+
+  return response;
+};
+
+const updateCampaign = async (editedCampaignData: any, campaignId: any) => {
+  const response = await FirebaseService.callFirebaseFunction("editProject", {
+    project: campaignId,
+    changes: {
+      ...editedCampaignData,
+    },
+  });
+
+  return response;
+};
+
+export { getCampaignsList, createCampaign, updateCampaign };

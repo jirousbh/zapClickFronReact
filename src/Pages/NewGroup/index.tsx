@@ -105,16 +105,14 @@ export default function NewGroup() {
   };
 
   const saveGroupData = () => {
-    if (selectedGroup) {
-      try {
-        selectedGroup
-          ? createGroup(url, singleselect.value)
-          : updateGroup(url, selectedGroup.id, selectedGroup.projectId);
+    try {
+      selectedGroup
+        ? updateGroup(url, selectedGroup.id, selectedGroup.projectId)
+        : createGroup(url, singleselect.value);
 
-        setCreatedModalIsOpen(true);
-      } catch (error) {
-        setErrorModalIsOpen(true);
-      }
+      setCreatedModalIsOpen(true);
+    } catch (error) {
+      setErrorModalIsOpen(true);
     }
   };
 
@@ -247,8 +245,8 @@ export default function NewGroup() {
         <Modal.Body>
           <div className="tx-center">
             {" "}
-            <i className="icon icon ion-ios-close-circle-outline tx-100 tx-success lh-1 mg-t-20 d-inline-block"></i>{" "}
-            <h4 className="tx-success mg-b-20">Erro ao salvar</h4>{" "}
+            <i className="icon icon ion-ios-close-circle-outline tx-100 tx-danger lh-1 mg-t-20 d-inline-block"></i>{" "}
+            <h4 className="tx-danger mg-b-20">Erro ao salvar</h4>{" "}
             <p className="mg-b-20 mg-x-20">
               Houve um erro ao tentar {selectedGroup ? "atualizar" : "salvar"} o
               grupo
@@ -256,7 +254,7 @@ export default function NewGroup() {
             <Button
               variant=""
               aria-label="Close"
-              className="btn ripple btn-success pd-x-25"
+              className="btn ripple btn-danger pd-x-25"
               type="button"
               onClick={() => setErrorModalIsOpen(false)}
             >

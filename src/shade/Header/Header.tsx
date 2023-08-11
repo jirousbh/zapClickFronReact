@@ -1244,7 +1244,7 @@ export default function Header() {
                         routeChange();
                       }}
                     >
-                      <i className="far fa-arrow-alt-circle-left"></i> Sign Out
+                      <i className="far fa-arrow-alt-circle-left"></i> Sair
                     </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
