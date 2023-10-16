@@ -15,6 +15,8 @@ import {
   Button,
   Modal,
   Form,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 
 import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
@@ -31,37 +33,92 @@ import { useDispatch, useSelector } from "react-redux";
 export default function Companies() {
   const dispatch = useDispatch();
 
-  const companiesList = useSelector(
-    (state: any) => state.companiesReducer.companiesList
-  );
-
   const [newCompanyModal, setNewCompanyModal] = useState(false);
 
-  const [data, setData] = useState({
+  const [showHiddenCompanies, setShowHiddenCompanies] = useState(false);
+
+  const [companiesFormated, setCompaniesFormated] = useState([]);
+
+  const [company, setCompany] = useState<any>({
+    type: "Cadastrar Empresa",
     id: "",
     name: "",
+    active: "",
+    isAdmin: "",
   });
 
-  const { id, name } = data;
+  const { type, id, name, active, isAdmin } = company;
 
-  const saveCompany = () => {
+  const saveCompany = async () => {
     try {
-      id ? createCompany({ name }) : editCompany({ id, name });
+      const company = {
+        id,
+        name,
+        active,
+        isAdmin,
+      };
+      const payload = {
+        company,
+        changes: {
+          name,
+        },
+      };
+      !id ? await createCompany({ name }) : await editCompany(payload);
+      setupCompaniesList(true);
     } catch (error) {
       console.log(error);
     } finally {
-      setNewCompanyModal(false);
+      setCompany({
+        id: "",
+        name: "",
+      });
+      closeModal();
     }
+  };
+  console.log(type);
+
+  const closeModal = () => {
+    setNewCompanyModal(false);
+    setCompany({
+      type: "Cadastrar Empresa",
+      id: "",
+      name: "",
+      active: "",
+      isAdmin: "",
+    });
+  };
+
+  const handleEditCompany = (company: any) => {
+    setCompany({
+      type: "Alterar Empresa",
+      id: company.id,
+      name: company.name,
+      active: company.active,
+      isAdmin: company.isAdmin,
+    });
+
+    setNewCompanyModal(true);
   };
 
   const changeHandler = (e: any) => {
-    setData({ ...data, [e.target.name]: e.target.value });
+    setCompany({ ...company, [e.target.name]: e.target.value });
+  };
+
+  const handleHideUnhideCompany = (company: any) => {
+    editCompany({
+      id,
+      changes: {
+        active: !company.active,
+      },
+    });
+
+    setupCompaniesList(showHiddenCompanies);
   };
 
   const tableInstance = useTable(
     {
       columns: COMPANIES_COLUMNS,
-      data: companiesList,
+      data: companiesFormated,
     },
     useGlobalFilter,
     useSortBy,
@@ -69,13 +126,13 @@ export default function Companies() {
   );
 
   const {
-    getTableProps, // table props from react-table
-    headerGroups, // headerGroups, if your table has groupings
-    getTableBodyProps, // table body props from react-table
-    prepareRow, // Prepare the row (this function needs to be called for each row before getting the row props)
+    getTableProps,
+    headerGroups,
+    getTableBodyProps,
+    prepareRow,
     state,
     setGlobalFilter,
-    page, // use, page or rows
+    page,
     nextPage,
     previousPage,
     canNextPage,
@@ -88,22 +145,76 @@ export default function Companies() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
-  const setupCompaniesList = () => {
-    auth.onAuthStateChanged(async (user) => {
-      let companiesListLocal = companiesList;
-      if (!companiesListLocal.length) {
-        const fetchCompaniesResult = await getCompaniesList(user?.email);
+  const setupCompaniesList = async (showHidden: boolean) => {
+    try {
+      const fetchCompaniesResult = await getCompaniesList(null, showHidden);
 
-        if (fetchCompaniesResult?.data.length) {
-          companiesListLocal = fetchCompaniesResult?.data;
-          dispatch(setCompaniesList(fetchCompaniesResult?.data));
-        }
+      if (fetchCompaniesResult?.data.length) {
+        const companiesMapped = fetchCompaniesResult.data.map(
+          (company: any) => {
+            console.log(company, "@@@ map");
+            return {
+              id: company.id,
+              name: company.name,
+              options: (
+                <span className="">
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Alterar Empresa</Tooltip>}
+                  >
+                    <Button
+                      variant=""
+                      onClick={() => handleEditCompany(company)}
+                      className="btn bg-yellow btn-sm rounded-11 me-2"
+                    >
+                      <i className="fa fa-edit"></i>
+                    </Button>
+                  </OverlayTrigger>
+
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={
+                      <Tooltip>
+                        {company.active
+                          ? "Ocultar link"
+                          : "Deixar Link Vísivel Novamente"}
+                      </Tooltip>
+                    }
+                  >
+                    <Button
+                      variant=""
+                      onClick={() => handleHideUnhideCompany(company)}
+                      className="btn bg-red btn-sm rounded-11 me-2"
+                      aria-controls=""
+                    >
+                      {showHiddenCompanies ? (
+                        <i className="fas fa-eye-slash"></i>
+                      ) : (
+                        <i className="fas fa-eye"></i>
+                      )}
+                    </Button>
+                  </OverlayTrigger>
+                </span>
+              ),
+            };
+          }
+        );
+
+        dispatch(setCompaniesList(fetchCompaniesResult));
+        setCompaniesFormated(companiesMapped);
       }
-    });
+    } catch (error) {
+      console.log("error, fetchCompaniesResult", error);
+    }
+  };
+
+  const handleHiddenCompanies = () => {
+    setShowHiddenCompanies(!showHiddenCompanies);
+    setupCompaniesList(!showHiddenCompanies);
   };
 
   useEffect(() => {
-    setupCompaniesList();
+    setupCompaniesList(false);
   }, []);
 
   return (
@@ -117,13 +228,32 @@ export default function Companies() {
 
       {/* <!-- row  --> */}
       <Row>
-        <Col sm={12} className="col-12 d-flex justify-content-end">
+        <Col sm={6} className="col-12">
           <Button
             variant=""
             className="btn me-2 tx-18 btn-primary mb-4"
             onClick={() => setNewCompanyModal(true)}
           >
             Cadastrar Empresa
+          </Button>
+        </Col>
+        <Col sm={6} className="col-12 d-flex justify-content-end">
+          <Button
+            variant=""
+            className="btn btn-outline-primary mb-4"
+            onClick={handleHiddenCompanies}
+          >
+            {!showHiddenCompanies ? (
+              <>
+                <i className="fas fa-eye-slash me-2"></i>
+                Exibir empresas ocultas
+              </>
+            ) : (
+              <>
+                <i className="fas fa-eye me-2"></i>
+                Exibir empresas visíveis
+              </>
+            )}
           </Button>
         </Col>
       </Row>
@@ -277,15 +407,10 @@ export default function Companies() {
             </Card.Body>
           </Card>
         </Col>
-
         <Modal show={newCompanyModal}>
           <Modal.Header>
-            <Modal.Title>Cadastrar empresa cliente</Modal.Title>
-            <Button
-              variant=""
-              className="btn btn-close"
-              onClick={() => setNewCompanyModal(false)}
-            >
+            <Modal.Title>{type}</Modal.Title>
+            <Button variant="" className="btn btn-close" onClick={closeModal}>
               x
             </Button>
           </Modal.Header>
@@ -322,7 +447,7 @@ export default function Companies() {
                 aria-label="Close"
                 className="btn ripple btn-danger pd-x-25"
                 type="button"
-                onClick={() => setNewCompanyModal(false)}
+                onClick={closeModal}
               >
                 Fechar
               </Button>{" "}

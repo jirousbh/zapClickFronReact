@@ -8,7 +8,7 @@ const getCompaniesList = async (
     "fetchCompanies",
     {
       showHidden,
-      userEmail,
+      userEmail: null,
     }
   );
 
@@ -19,22 +19,19 @@ const createCompany = async ({ name }: any) => {
   const createCompaniyResult = await FirebaseService.callFirebaseFunction(
     "createCompany",
     {
-      name,
+      company: {
+        name,
+      },
     }
   );
 
   return createCompaniyResult;
 };
 
-const editCompany = async ({ company, name }: any) => {
+const editCompany = async (company: any) => {
   const createCompaniyResult = await FirebaseService.callFirebaseFunction(
     "editCompany",
-    {
-      company,
-      changes: {
-        name,
-      },
-    }
+    company
   );
 
   return createCompaniyResult;

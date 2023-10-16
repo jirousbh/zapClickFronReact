@@ -11,7 +11,7 @@ export const CLIENTS_COLUMNS: any = [
   },
   {
     Header: "Empresa",
-    accessor: "company",
+    accessor: "company.name",
     className: "text-center ",
   },
   {

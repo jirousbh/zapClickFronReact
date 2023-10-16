@@ -1,5 +1,20 @@
 import * as FirebaseService from "./FirebaseService";
 
+const getClient = async (
+  userEmail?: string | null,
+  showHidden: boolean = false
+) => {
+  const fetchClients = await FirebaseService.callFirebaseFunction(
+    "fetchClients",
+    {
+      showHidden,
+      userEmail,
+    }
+  );
+
+  return fetchClients;
+};
+
 const createClient = async ({ name, company, email }: any) => {
   const createCompaniyResult = await FirebaseService.callFirebaseFunction(
     "createClient",
@@ -15,11 +30,11 @@ const createClient = async ({ name, company, email }: any) => {
   return createCompaniyResult;
 };
 
-const editClient = async ({ client, company, name, email }: any) => {
+const editClient = async ({ id, company, name, email }: any) => {
   const createCompaniyResult = await FirebaseService.callFirebaseFunction(
     "editClient",
     {
-      client,
+      client: id,
       company,
       changes: {
         name,
@@ -31,4 +46,4 @@ const editClient = async ({ client, company, name, email }: any) => {
   return createCompaniyResult;
 };
 
-export { createClient, editClient };
+export { createClient, editClient, getClient };

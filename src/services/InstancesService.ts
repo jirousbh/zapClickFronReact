@@ -1,26 +1,38 @@
 import * as FirebaseService from "./FirebaseService";
 
 const getInstancesList = async () => {
-  // const fetchInstancesResult = await FirebaseService.callFirebaseFunction(
-  //   "fetchInstances"
-  // );
+  const fetchInstancesResult = await FirebaseService.callFirebaseFunction(
+    "fetchInstances"
+  );
 
-  // return fetchInstancesResult;
-
-  return {
-    data: [
-      {
-        id: 1,
-        description: "Testando",
-        api: "SIM",
-        phone: 21394488393,
-      },
-      {
-        id: 2,
-        description: "Testando 2",
-      },
-    ],
-  };
+  return fetchInstancesResult;
 };
 
-export { getInstancesList };
+const createInstance = async (instance: any) => {
+  return FirebaseService.callFirebaseFunction("createInstance", {
+    instance: {
+      description: instance.description,
+      instance: instance.instance,
+      token: instance.token,
+      api: instance.instanceApi,
+    },
+  });
+};
+
+const editInstance = async (instance: any) => {
+  return FirebaseService.callFirebaseFunction("editInstance", {
+    instanceId: instance.id,
+    changes: {
+      description: instance.description,
+      instance: instance.instance,
+      token: instance.token,
+      api: instance.instanceApi,
+    },
+  });
+};
+
+const deleteInstance = async (instanceId: any) => {
+  return FirebaseService.callFirebaseFunction("deleteInstance", { instanceId });
+};
+
+export { getInstancesList, createInstance, editInstance, deleteInstance };

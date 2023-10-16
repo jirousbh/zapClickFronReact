@@ -31,7 +31,7 @@ const cacheInvalidation = [
     clean: ["fetchCompanyClients", "fetchClients"],
   },
   {
-    onCall: ["createInstance", "editInstance"],
+    onCall: ["createInstance", "editInstance", "deleteInstance"],
     clean: ["fetchInstances", "getInstance"],
   },
   {

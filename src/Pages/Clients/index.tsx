@@ -11,6 +11,8 @@ import {
   Button,
   Modal,
   Form,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 import {
   useTable,
@@ -28,7 +30,12 @@ import { setCompaniesList } from "../../redux/actions/companies";
 import { CLIENTS_COLUMNS } from "./ClientsTableConfig";
 
 import { getCompaniesList } from "../../services/CompaniesService";
-import { createClient, editClient } from "../../services/ClientsService";
+import {
+  createClient,
+  editClient,
+  getClient,
+} from "../../services/ClientsService";
+import { parseClient } from "../../utils/common";
 
 export default function Clients() {
   const dispatch = useDispatch();
@@ -37,27 +44,34 @@ export default function Clients() {
     (state: any) => state.companiesReducer.companiesList
   );
 
-  const [singleselect, setSingleselect] = useState<SingleValue<number>>(null);
+  const [singleselect, setSingleselect] = useState<any>(null);
   const [companiesOptions, setCompaniesOptions] = useState<any>([]);
 
+  const [clientsFormated, setClientsFormated] = useState([]);
+
+  const [showHiddenClients, setShowHiddenClients] = useState(false);
   const [newClientModal, setNewClientModal] = useState(false);
 
-  const [data, setData] = useState({
+  const [formValues, setFormValues] = useState({
+    type: "Cadastrar Cliente",
     id: "",
     name: "",
     email: "",
   });
 
-  const { id, name, email } = data;
-
-  const changeHandler = (e: any) => {
-    setData({ ...data, [e.target.name]: e.target.value });
+  const handleChangeValue = (name: string, value: string) => {
+    setFormValues({
+      ...formValues,
+      [name]: value,
+    });
   };
+
+  const { type, id, name, email } = formValues;
 
   const tableInstance = useTable(
     {
       columns: CLIENTS_COLUMNS,
-      data: [],
+      data: clientsFormated,
     },
     useGlobalFilter,
     useSortBy,
@@ -65,13 +79,13 @@ export default function Clients() {
   );
 
   const {
-    getTableProps, // table props from react-table
-    headerGroups, // headerGroups, if your table has groupings
-    getTableBodyProps, // table body props from react-table
-    prepareRow, // Prepare the row (this function needs to be called for each row before getting the row props)
+    getTableProps,
+    headerGroups,
+    getTableBodyProps,
+    prepareRow,
     state,
     setGlobalFilter,
-    page, // use, page or rows
+    page,
     nextPage,
     previousPage,
     canNextPage,
@@ -84,52 +98,141 @@ export default function Clients() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
-  const setupCompaniesList = () => {
-    auth.onAuthStateChanged(async (user) => {
-      let companiesListLocal = companiesList;
-      if (!companiesListLocal.length) {
-        const fetchCompaniesResult = await getCompaniesList(user?.email);
+  const setCompanies = async () => {
+    const fetchCompaniesResult = await getCompaniesList(null);
 
-        if (fetchCompaniesResult?.data.length) {
-          companiesListLocal = fetchCompaniesResult?.data;
-          dispatch(setCompaniesList(fetchCompaniesResult?.data));
-        }
-      }
-
-      const companiesMapped = companiesListLocal.map((company: any) => {
-        return {
-          value: company.id,
-          label: company.name,
-          data: company,
-        };
-      });
-
-      if (companiesMapped.length) {
-        setSingleselect(companiesMapped[0]);
-
-        return setCompaniesOptions(companiesMapped);
-      }
-    });
+    if (fetchCompaniesResult?.data.length) {
+      dispatch(setCompaniesList(fetchCompaniesResult?.data));
+      return fetchCompaniesResult?.data;
+    }
   };
 
-  const saveCompany = () => {
+  const handleEditClient = (client: any) => {
+    setFormValues({
+      type: "Alterar Cliente",
+      id: client.id,
+      name: client.name,
+      email: client.email,
+    });
+    setSingleselect({ label: client.company.name, value: client.company.id });
+    setNewClientModal(true);
+  };
+
+  const closeModal = () => {
+    setFormValues({
+      type: "Cadastrar Cliente",
+      id: "",
+      name: "",
+      email: "",
+    });
+    setNewClientModal(false);
+  };
+
+  const handleHideUnhideClient = (client: any, company: any) => {
+    editClient({
+      client: client.id,
+      company,
+      changes: {
+        active: !client.active,
+      },
+    });
+
+    setupClientsList(showHiddenClients);
+  };
+
+  const setupClientsList = async (showHidden: boolean = false) => {
+    let companiesListLocal = companiesList;
+    if (!companiesListLocal.length) {
+      companiesListLocal = await setCompanies();
+    }
+    try {
+      const { data: clients } = await getClient(null, showHidden);
+      if (clients?.length) {
+        const { data: companies } = await getCompaniesList(null, true);
+        const newClient = parseClient(clients, companies);
+
+        const clientsMapped = newClient.map((client: any) => {
+          return {
+            ...client,
+            options: (
+              <span className="">
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Alterar Cliente</Tooltip>}
+                >
+                  <Button
+                    variant=""
+                    onClick={() => handleEditClient(client)}
+                    className="btn bg-yellow btn-sm rounded-11 me-2"
+                  >
+                    <i className="fa fa-edit"></i>
+                  </Button>
+                </OverlayTrigger>
+
+                <OverlayTrigger
+                  placement="top"
+                  overlay={
+                    <Tooltip>
+                      {client.active
+                        ? "Ocultar link"
+                        : "Deixar Link Vísivel Novamente"}
+                    </Tooltip>
+                  }
+                >
+                  <Button
+                    variant=""
+                    onClick={() =>
+                      handleHideUnhideClient(client, client.companyId)
+                    }
+                    className="btn btn-danger btn-sm rounded-11 me-2"
+                  >
+                    {client.active ? (
+                      <i className="fas fa-eye-slash"></i>
+                    ) : (
+                      <i className="fas fa-eye"></i>
+                    )}
+                  </Button>
+                </OverlayTrigger>
+              </span>
+            ),
+          };
+        });
+
+        const selectCompanies = companies.map((company: any) => {
+          return {
+            label: company.name,
+            value: company.id,
+          };
+        });
+
+        setSingleselect(selectCompanies[0]);
+        setCompaniesOptions(selectCompanies);
+        setClientsFormated(clientsMapped);
+      }
+    } catch (error) {
+      console.log("error, fetchClientsResult", error);
+    }
+  };
+
+  const saveClient = async () => {
     if (!singleselect) return;
 
     try {
-      id
+      !id
         ? // @ts-ignore
-          createClient({ name, company: singleselect.id, email })
+          await createClient({ name, company: singleselect.value, email })
         : // @ts-ignore
-          editClient({ id, name, company: singleselect.id, email });
+          await editClient({ id, company: singleselect.value, name, email });
+      setupClientsList();
     } catch (error) {
       console.log(error);
     } finally {
-      setNewClientModal(false);
+      closeModal();
     }
   };
 
   useEffect(() => {
-    setupCompaniesList();
+    setupClientsList();
   }, []);
 
   return (
@@ -306,12 +409,8 @@ export default function Clients() {
 
         <Modal show={newClientModal}>
           <Modal.Header>
-            <Modal.Title>Cadastrar cliente</Modal.Title>
-            <Button
-              variant=""
-              className="btn btn-close"
-              onClick={() => setNewClientModal(false)}
-            >
+            <Modal.Title>{type}</Modal.Title>
+            <Button variant="" className="btn btn-close" onClick={closeModal}>
               x
             </Button>
           </Modal.Header>
@@ -328,7 +427,9 @@ export default function Clients() {
                       name="name"
                       type="text"
                       value={name}
-                      onChange={changeHandler}
+                      onChange={(e) =>
+                        handleChangeValue("name", e.target.value)
+                      }
                       required
                     />
                   </Form.Group>
@@ -341,10 +442,12 @@ export default function Clients() {
                     <Form.Control
                       className="form-control"
                       placeholder="Email"
-                      name="name"
+                      name="email"
                       type="text"
-                      value={name}
-                      onChange={changeHandler}
+                      value={email}
+                      onChange={(e) =>
+                        handleChangeValue("email", e.target.value)
+                      }
                       required
                     />
                   </Form.Group>
@@ -371,7 +474,7 @@ export default function Clients() {
                 aria-label="Confirm"
                 className="btn ripple btn-primary pd-x-25"
                 type="button"
-                onClick={() => saveCompany()}
+                onClick={() => saveClient()}
               >
                 Confirmar
               </Button>{" "}
@@ -380,7 +483,7 @@ export default function Clients() {
                 aria-label="Close"
                 className="btn ripple btn-danger pd-x-25"
                 type="button"
-                onClick={() => setNewClientModal(false)}
+                onClick={closeModal}
               >
                 Fechar
               </Button>{" "}
