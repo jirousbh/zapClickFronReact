@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 
 import ReactApexChart from "react-apexcharts";
-import Select, { SingleValue } from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Breadcrumb,
@@ -36,6 +35,7 @@ import {
   getClient,
 } from "../../services/ClientsService";
 import { parseClient } from "../../utils/common";
+import Select from "../../components/Select";
 
 export default function Clients() {
   const dispatch = useDispatch();
@@ -459,11 +459,11 @@ export default function Clients() {
                     <p className="mg-b-10">Empresa</p>
                     <div className=" SlectBox">
                       <Select
-                        defaultValue={singleselect}
-                        onChange={setSingleselect}
+                        select={singleselect}
                         options={companiesOptions}
-                        placeholder="Selecione uma empresa"
-                        classNamePrefix="selectform"
+                        onChange={(e) =>
+                          setSingleselect({ value: e.target.value })
+                        }
                       />
                     </div>
                   </div>

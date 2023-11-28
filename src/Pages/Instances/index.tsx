@@ -5,7 +5,6 @@ import {
   useGlobalFilter,
   usePagination,
 } from "react-table";
-import Select, { SingleValue } from "react-select";
 import {
   Breadcrumb,
   Col,
@@ -26,6 +25,7 @@ import {
   editInstance,
   getInstancesList,
 } from "../../services/InstancesService";
+import Select from "../../components/Select";
 
 export default function Instances() {
   const [instancesFormated, setInstancesFormated] = useState([]);
@@ -422,11 +422,11 @@ export default function Instances() {
                     <p className="mg-b-10">Empresa</p>
                     <div className=" SlectBox">
                       <Select
-                        defaultValue={singleselect}
-                        onChange={setSingleselect}
+                        select={singleselect}
                         options={instanceOptions}
-                        placeholder="Selecione uma empresa"
-                        classNamePrefix="selectform"
+                        onChange={(e) =>
+                          setSingleselect({ value: e.target.value })
+                        }
                       />
                     </div>
                   </div>

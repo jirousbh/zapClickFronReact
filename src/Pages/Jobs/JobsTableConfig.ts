@@ -40,3 +40,26 @@ export const JOBS_COLUMNS: any = [
     className: "text-center ",
   },
 ];
+
+export const JOB_LOGS_COLUMNS: any = [
+  {
+    Header: "GRUPO",
+    accessor: "link",
+    className: "text-center ",
+  },
+  {
+    Header: "EXECUTOU?",
+    accessor: "success",
+    className: "text-center ",
+  },
+  {
+    Header: "MSG DE ERRO",
+    accessor: "errorMessage",
+    className: "text-center ",
+  },
+  {
+    Header: "DATA/HORA EXEC",
+    accessor: "dateTimeStr",
+    className: "text-center ",
+  },
+];

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 
 import { useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   useTable,
   useSortBy,
@@ -23,23 +23,70 @@ import {
 
 import { GlobalFilter } from "../Dashboard/data";
 
-import { JOBS_COLUMNS } from "./JobsTableConfig";
+import { JOBS_COLUMNS, JOB_LOGS_COLUMNS } from "./JobsTableConfig";
 
-import { getJobsList } from "../../services/JobsService";
-import { getCampaignsList } from "../../../services/CampaignsService";
-
-import { toDateTime } from "../../../utils/dates";
+import {
+  deleteJob,
+  editJob,
+  getJobsList,
+  getJobLogs,
+  sendJob
+} from "../../services/JobsService";
+import Select from "../../components/Select";
 
 export default function Jobs() {
-  let navigate = useNavigate();
-  const dispatch = useDispatch();
-
   const [showEndedCampaigns, setShowEndedCampaigns] = useState(false);
-
   const [error, setError] = useState(false);
-
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [jobsList, setJobsList] = useState([]);
+  const [openModalEdit, setOpenModalEdit] = useState(false);
+  const [openModalDelete, setOpenModalDelete] = useState(false);
+  const [openModalSend, setOpenModalSend] = useState(false);
+  const [openModalJobLogs, setOpenModalJobLogs] = useState(false);
+  const [jobId, setJobId] = useState(null);
+  const [jobLogs, setJobLogs] = useState([]);
+  const [singleselect, setSingleselect] = useState<any>(null);
+  const [jobOptions, setJobOptions] = useState<any>([]);
+  const [jobName, setJobName] = useState("");
+  const [formValues, setFormValues] = useState({
+    type: "",
+    id: "",
+    startTime: "",
+    firstGrpId: "",
+    lastGrpId: "",
+    minInterval: "",
+    maxInterval: "",
+    phone: "",
+  });
+
+  const openJobLogsModal = async (jobId: string | number, jobName) => {
+    try {
+      const { data: jobLogs } = await getJobLogs(jobId);
+
+      const jobLogsFormatted = jobLogs.map((job) => {
+        const statusSuccess = job.success ? "success" : "danger";
+        const className = `badge bg-${statusSuccess}`;
+        const success = (
+          <span className={className}>{job.success ? "Sim" : "Não"}</span>
+        );
+        console.log(job.success, className, success);
+
+        return { ...job, success };
+      });
+      setJobLogs(jobLogsFormatted);
+      setJobName(jobName);
+      setOpenModalJobLogs(true);
+    } catch (error) {
+      console.log(error, "@@@ ErrorFetchJobLogs");
+    }
+  };
+
+  const handleChangeValue = (name: string, value: string) => {
+    setFormValues({
+      ...formValues,
+      [name]: value,
+    });
+  };
 
   const [topCardsInfo, setTopCardsInfo] = useState({
     totalJobs: 0,
@@ -47,6 +94,16 @@ export default function Jobs() {
     concludedWithSuccess: 0,
     concludedWithError: 0,
   });
+
+  const tableJobLogsInstance = useTable(
+    {
+      columns: JOB_LOGS_COLUMNS,
+      data: jobLogs,
+    },
+    useGlobalFilter,
+    useSortBy,
+    usePagination
+  );
 
   const tableInstance = useTable(
     {
@@ -78,48 +135,113 @@ export default function Jobs() {
 
   const { globalFilter, pageIndex, pageSize } = state;
 
-  const navigateToNewCampaign = (
-    isEdit: boolean = false,
-    seletedCampaignId = null
-  ) => {
-    let path = `${process.env.PUBLIC_URL}/new-campaign/`;
-
-    // if (isEdit && seletedCampaignId) {
-    //   dispatch(setSelectedCampaignId(seletedCampaignId));
-    // } else {
-    //   dispatch(setSelectedCampaignId(null));
-    // }
-
-    navigate(path);
+  const calculateJobs = (jobs, statusId) => {
+    return jobs.filter((job) => job.statusId === statusId).length;
   };
 
-  const navigateTo = (navigateToPath: string, seletedCampaignId = null) => {
-    let path = `${process.env.PUBLIC_URL}/${navigateToPath}`;
+  const openModalEditJob = (job) => {
+    setFormValues({
+      type: `Alterar Agendamento de: ${job.name}`,
+      id: String(job.jobId),
+      startTime: job.startTimeStr,
+      firstGrpId: String(job.firstGrpId),
+      lastGrpId: String(job.lastGrpId),
+      minInterval: String(job.minInterval),
+      maxInterval: String(job.maxInterval),
+    });
+    const status = [
+      {
+        value: "0",
+        label: "0 - Desativado",
+      },
+      { value: "1", label: "1 - Pronto pra Execução" },
+      { value: "2", label: "2 - Executando" },
+      { value: "3", label: "3 - Finalizado com Erros" },
+      { value: "4", label: "4 - Finalizado com Sucesso" },
+      { value: "5", label: "5 - A enviar a confirmação" },
+    ];
 
-    // dispatch(setSelectedCampaignId(seletedCampaignId));
+    setSingleselect({
+      value: String(job.statusId),
+      label: `${job.statusId} - ${job.description}`,
+    });
 
-    navigate(path);
+    setJobOptions(status);
+    setOpenModalEdit(true);
   };
 
-  const setupJobsList = function (data, admin = false) {
-    // const user = auth.onAuthStateChanged((user) => console.log("user", user));
+  const closeModalEditJob = () => {
+    setFormValues({
+      type: `Alterar Agendamento de: ${""}`,
+      id: "",
+      name: "",
+      startTime: "",
+      firstGrpId: "",
+      lastGrpId: "",
+      minInterval: "",
+      maxInterval: "",
+      phone: "",
+    });
+    setOpenModalEdit(false);
+  };
 
-    if (data.length) {
-      let totalStatus = [0, 0, 0, 0, 0];
+  const openModalDeleteJob = (jobId: string | number) => {
+    setJobId(jobId);
+    setOpenModalDelete(true);
+  };
 
-      const jobsUpdated = data.map((job) => {
-        totalStatus[doc.status]++;
+  const editJobList = async () => {
+    try {
+      await editJob({ ...formValues, status: singleselect.value });
+      closeModalEditJob();
+      loadJobs();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-        const params = JSON.parse(job.params);
+  const deleteJobList = async () => {
+    try {
+      await deleteJob(jobId);
+      setOpenModalDelete(false);
+      loadJobs();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-        bdStatus =
-          '<span class="badge bg-' +
-          doc.classList +
-          '">' +
-          doc.statusId +
-          " - " +
-          doc.description +
-          "</span>";
+  const openModalSendJob = (id, name) => {
+    setJobName(name);
+    setJobId(id)
+    setOpenModalSend(true);
+  };
+
+  const sendJobList = async () => {
+    try {
+      await sendJob(jobId, formValues.phone)
+      closeModalSendJob();
+    } catch(error) {
+      console.log(`[sendJob] - ${error}`)
+    }
+  };
+
+  const closeModalSendJob = () => {
+    setOpenModalSend(false);
+    setFormValues({
+      ...formValues,
+      phone: "",
+    });
+  };
+
+  const setupJobsList = function (jobs, admin = false) {
+    if (jobs.length) {
+      const jobsUpdated = jobs.map((job) => {
+        const className = `badge bg-${job.classList}`;
+        const status = (
+          <span className={className}>
+            {job.statusId} - {job.description}
+          </span>
+        );
 
         return {
           jobId: job.jobId,
@@ -128,83 +250,72 @@ export default function Jobs() {
           startTime: job.startTimeStr,
           groups: job.firstGrpId + " a " + job.lastGrpId,
           interval: job.minInterval + " a " + job.maxInterval + " seg",
-          status: bdStatus,
-          options: null,
-          //   options: (
-          //     <span className="">
-          //       <OverlayTrigger
-          //         placement="top"
-          //         overlay={<Tooltip>Grupos da Campanha</Tooltip>}
-          //       >
-          //         <Link
-          //           to="#"
-          //           onClick={() => navigateTo("campaign-groups/", campaign.id)}
-          //           className="btn btn-primary btn-sm rounded-11 me-2"
-          //         >
-          //           <i className="fa fa-users"></i>
-          //         </Link>
-          //       </OverlayTrigger>
-
-          //       {campaign.useZapi ? (
-          //         <>
-          //           <OverlayTrigger
-          //             placement="top"
-          //             overlay={<Tooltip>Relatório de Leads</Tooltip>}
-          //           >
-          //             <Link
-          //               to="#"
-          //               onClick={() => navigateTo("campaign-leads/", campaign.id)}
-          //               className="btn bg-green btn-sm rounded-11 me-2"
-          //             >
-          //               <i className="fa fa-magnet"></i>
-          //             </Link>
-          //           </OverlayTrigger>
-
-          //           <OverlayTrigger
-          //             placement="top"
-          //             overlay={<Tooltip>Mensagens Enviadas</Tooltip>}
-          //           >
-          //             <Link
-          //               to="#"
-          //               onClick={() =>
-          //                 navigateTo("project-messages/", campaign.id)
-          //               }
-          //               className="btn bg-green btn-sm rounded-11 me-2"
-          //             >
-          //               <i className="fa fa-comment-dots"></i>
-          //             </Link>
-          //           </OverlayTrigger>
-          //         </>
-          //       ) : null}
-
-          //       {admin ? (
-          //         <OverlayTrigger
-          //           placement="top"
-          //           overlay={<Tooltip>Alterar Campanha</Tooltip>}
-          //         >
-          //           <Link
-          //             to="#"
-          //             onClick={() => navigateToNewCampaign(true, campaign.id)}
-          //             className="btn bg-yellow btn-sm rounded-11"
-          //           >
-          //             <i className="fa fa-edit"></i>
-          //           </Link>
-          //         </OverlayTrigger>
-          //       ) : null}
-          //     </span>
-          //   ),
+          status,
+          options: (
+            <span className="">
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Enviar Job</Tooltip>}
+              >
+                <Button
+                  variant=""
+                  onClick={() => openModalSendJob(job.jobId, job.name)}
+                  className="btn btn-primary btn-sm rounded-11 me-2"
+                >
+                  <i className="fa fa-paper-plane"></i>
+                </Button>
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Ver Logs</Tooltip>}
+              >
+                <Button
+                  variant=""
+                  onClick={() => openJobLogsModal(job.jobId, job.name)}
+                  className="btn btn-dark btn-sm rounded-11 me-2"
+                >
+                  <i className="fa fa-file"></i>
+                </Button>
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Editar Job</Tooltip>}
+              >
+                <Button
+                  variant=""
+                  onClick={() => openModalEditJob(job)}
+                  className="btn bg-yellow btn-sm rounded-11 me-2"
+                >
+                  <i className="fa fa-edit"></i>
+                </Button>
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Remover Job</Tooltip>}
+              >
+                <Button
+                  variant=""
+                  onClick={() => openModalDeleteJob(job.jobId)}
+                  className="btn btn-danger btn-sm rounded-11 me-2"
+                >
+                  <i className="fas fa-trash"></i>
+                </Button>
+              </OverlayTrigger>
+            </span>
+          ),
         };
       });
 
       setJobsList(jobsUpdated);
 
       setTopCardsInfo({
-        totalJobs: data?.length | 0,
-        alreadyToExecute: totalStatus[1],
-        concludedWithSuccess: totalStatus[3],
-        concludedWithError: totalStatus[4],
+        totalJobs: jobs?.length | 0,
+        alreadyToExecute: calculateJobs(jobs, 1),
+        concludedWithSuccess: calculateJobs(jobs, 4),
+        concludedWithError: calculateJobs(jobs, 3),
       });
-    } else {
+    }
+    /*     } else {
       setJobsList([
         {
           jobId: "",
@@ -217,43 +328,20 @@ export default function Jobs() {
           options: "",
         },
       ]);
-    }
+    } */
   };
 
   const loadJobs = async function (showEnded: boolean = false) {
     setLoadingJobs(true);
 
     try {
-      const fetchJobsResult = await getJobsList(showEnded);
-
-      setupJobsList(fetchJobsResult.data, false);
+      const { data: jobs } = await getJobsList(showEnded);
+      console.log(jobs, "@@@ jobs");
+      setupJobsList(jobs, false);
     } catch (error) {
-      setError(true);
-
-      setJobsList([
-        {
-          id: 0,
-          name: "Erro ao buscar os agendamentos...",
-          entryLink: "",
-          description: "",
-          companyId: "",
-          company: "",
-          clientId: "",
-          client: "",
-          maxClicks: "",
-          endDate: "",
-          endDateLabel: "",
-          options: "",
-        },
-      ]);
     } finally {
       setLoadingJobs(false);
     }
-  };
-
-  const handleEndedCampaigns = () => {
-    setShowEndedCampaigns(!showEndedCampaigns);
-    loadJobs(!showEndedCampaigns);
   };
 
   useEffect(() => {
@@ -278,9 +366,6 @@ export default function Jobs() {
           <h1 className="main-content-title mg-b-0 mg-b-lg-1">AGENDAMENTOS</h1>
         </div>
       </div>
-      {/* <!-- /breadcrumb --> */}
-
-      {/* <!-- row --> */}
       <Row>
         <Col xl={3} lg={12} md={12} xs={12}>
           <Card className="sales-card">
@@ -363,7 +448,7 @@ export default function Jobs() {
               </div>
               <div className="col-4">
                 <div className="circle-icon bg-warning-transparent text-center align-self-center overflow-hidden">
-                  <i className="fa fa-rocket tx-16 text-success"></i>
+                  <i className="fa fa-check-square tx-16 text-success"></i>
                 </div>
               </div>
             </Row>
@@ -392,16 +477,13 @@ export default function Jobs() {
               </div>
               <div className="col-4">
                 <div className="circle-icon bg-warning-transparent text-center align-self-center overflow-hidden">
-                  <i className="fa fa-error tx-16 text-secondary"></i>
+                  <i className="fa fa-ban tx-16 text-danger"></i>
                 </div>
               </div>
             </Row>
           </Card>
         </Col>
       </Row>
-      {/* <!-- row closed --> */}
-
-      {/* <!-- row  --> */}
       <Row>
         <Col sm={12} className="col-12">
           <Card>
@@ -549,6 +631,171 @@ export default function Jobs() {
             </Card.Body>
           </Card>
         </Col>
+        <Modal show={openModalEdit}>
+          <Modal.Header>
+            <Modal.Title>{formValues.type}</Modal.Title>
+            <Button
+              variant=""
+              className="btn btn-close"
+              onClick={() => closeModalEditJob()}
+            >
+              x
+            </Button>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="">
+              <Row className="mb-2">
+                <Col lg={12}>
+                  <Form.Group className="form-group">
+                    <Form.Label className="">Data/Hora de Envio</Form.Label>{" "}
+                    <input
+                      type="datetime-local"
+                      defaultValue={formValues.startTime}
+                      onChange={(e) =>
+                        handleChangeValue(
+                          "startTime",
+                          e.target.value.replace("T", " ")
+                        )
+                      }
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-2">
+                <Col lg={12}>
+                  <Form.Group className="form-group">
+                    <Form.Label className="">Faixa de Grupos</Form.Label>{" "}
+                    <div style={{ display: "flex", flexDirection: "row" }}>
+                      <Form.Control
+                        className="form-control"
+                        name="Faixa de Grupos"
+                        type="number"
+                        defaultValue={formValues.firstGrpId}
+                        onChange={(e) =>
+                          handleChangeValue("firstGrpId", e.target.value)
+                        }
+                        style={{ width: 80 }}
+                        min={0}
+                        required
+                      />
+                      <Form.Control
+                        className="form-control"
+                        name="Faixa de Grupos"
+                        type="number"
+                        defaultValue={formValues.lastGrpId}
+                        onChange={(e) =>
+                          handleChangeValue("lastGrpId", e.target.value)
+                        }
+                        style={{ width: 80 }}
+                        min={0}
+                        required
+                      />
+                    </div>
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-2">
+                <Col lg={12}>
+                  <Form.Group className="form-group">
+                    <Form.Label className="">Intervalo de Envio</Form.Label>{" "}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Form.Control
+                        className="form-control"
+                        name="Intervalo de Envio"
+                        type="number"
+                        defaultValue={formValues.minInterval}
+                        onChange={(e) =>
+                          handleChangeValue("minInterval", e.target.value)
+                        }
+                        style={{ width: 80 }}
+                        min={0}
+                        required
+                      />
+                      <Form.Control
+                        className="form-control"
+                        name="Intervalo de Envio"
+                        type="number"
+                        defaultValue={formValues.maxInterval}
+                        onChange={(e) =>
+                          handleChangeValue("maxInterval", e.target.value)
+                        }
+                        style={{ width: 80 }}
+                        min={0}
+                        required
+                      />
+                      <p style={{ marginLeft: 5 }}>seg</p>
+                    </div>
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-2">
+                <Col lg={12}>
+                  <div className="mb-4">
+                    <p className="mg-b-10">Status</p>
+                    <div className=" SlectBox">
+                      <Select
+                        select={singleselect}
+                        options={jobOptions}
+                        onChange={(e) =>
+                          setSingleselect({ value: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+              <Button
+                variant=""
+                aria-label="Confirm"
+                className="btn ripple btn-primary pd-x-25"
+                type="button"
+                onClick={() => editJobList()}
+              >
+                Confirmar
+              </Button>{" "}
+              <Button
+                variant=""
+                aria-label="Close"
+                className="btn ripple btn-danger pd-x-25"
+                type="button"
+                onClick={() => closeModalEditJob()}
+              >
+                Fechar
+              </Button>{" "}
+            </div>
+          </Modal.Body>
+        </Modal>
+        <Modal show={openModalDelete}>
+          <Modal.Body>
+            <div>
+              <p>Tem certeza qeu deseja excluir o agendamento?</p>
+              <Button
+                variant=""
+                aria-label="Confirm"
+                className="btn ripple btn-primary pd-x-25"
+                type="button"
+                onClick={() => deleteJobList()}
+              >
+                Confirmar
+              </Button>{" "}
+              <Button
+                variant=""
+                aria-label="Close"
+                className="btn ripple btn-danger pd-x-25"
+                type="button"
+                onClick={() => setOpenModalDelete(false)}
+              >
+                Fechar
+              </Button>{" "}
+            </div>
+          </Modal.Body>
+        </Modal>
       </Row>
 
       <Modal show={error}>
@@ -584,6 +831,153 @@ export default function Jobs() {
             >
               Fechar
             </Button>{" "}
+          </div>
+        </Modal.Body>
+        <Modal.Body>
+          <div className="tx-center">
+            {" "}
+            <i className="icon icon ion-ios-close-circle-outline tx-100 tx-danger lh-1 mg-t-20 d-inline-block"></i>{" "}
+            <h4 className="tx-danger mg-b-20">
+              Erro ao buscar a lista de agendamentos
+            </h4>{" "}
+            <p className="mg-b-20 mg-x-20">
+              Desculpe, ocorreu um erro ao tentar buscar a lista de
+              agendamentos.
+              <br />
+              Por favor tente novamente, caso o erro continue, entre em contato
+              com o admiistrador do sitema.
+            </p>
+            <Button
+              variant=""
+              aria-label="Close"
+              className="btn ripple btn-danger pd-x-25"
+              type="button"
+              onClick={() => setError(false)}
+            >
+              Fechar
+            </Button>{" "}
+          </div>
+        </Modal.Body>
+      </Modal>
+      <Modal show={openModalSend}>
+        <Modal.Header>
+          <Modal.Title>Testar Envio de: {jobName}</Modal.Title>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={closeModalSendJob}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="">
+            <Row className="mb-2">
+              <Col lg={12}>
+                <Form.Group className="form-group">
+                  <Form.Label className="">Telefone para envio</Form.Label>{" "}
+                  <Form.Control
+                    className="form-control"
+                    name="Telefone para envio"
+                    placeholder="5531XXXXXXXXX"
+                    type="text"
+                    onChange={(e) => handleChangeValue("phone", e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Button
+              variant=""
+              aria-label="Confirm"
+              className="btn ripple btn-primary pd-x-25"
+              type="button"
+              onClick={sendJobList}
+            >
+              Confirmar
+            </Button>{" "}
+            <Button
+              variant=""
+              aria-label="Close"
+              className="btn ripple btn-danger pd-x-25"
+              type="button"
+              onClick={closeModalSendJob}
+            >
+              Cancelar
+            </Button>{" "}
+          </div>
+        </Modal.Body>
+      </Modal>
+      <Modal show={openModalJobLogs} size="lg" style={{ width: "100%" }}>
+        <Modal.Header>
+          <Modal.Title>Logs de: {jobName}</Modal.Title>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={() => setOpenModalJobLogs(false)}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body style={{ width: "100%" }}>
+          {" "}
+          {/* Job Logs Table*/}
+          <div className="table-responsive">
+            {!!jobLogs.length ? (
+              <table
+                {...tableJobLogsInstance.getTableProps()}
+                className="table table-bordered text-nowrap mb-0"
+              >
+                <thead>
+                  {tableJobLogsInstance.headerGroups.map((headerGroup: any) => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                      {headerGroup.headers.map((column: any) => (
+                        <th
+                          {...column.getHeaderProps(
+                            column.getSortByToggleProps()
+                          )}
+                          className={column.className}
+                        >
+                          <span className="tabletitle">
+                            {column.render("Header")}
+                          </span>
+                          <span>
+                            {column.isSorted ? (
+                              column.isSortedDesc ? (
+                                <i className="fa fa-angle-down"></i>
+                              ) : (
+                                <i className="fa fa-angle-up"></i>
+                              )
+                            ) : (
+                              ""
+                            )}
+                          </span>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+
+                <tbody {...tableJobLogsInstance.getTableBodyProps()}>
+                  {tableJobLogsInstance.page.map((row: any) => {
+                    tableJobLogsInstance.prepareRow(row);
+                    return (
+                      <tr className="text-center" {...row.getRowProps()}>
+                        {row.cells.map((cell: any) => {
+                          return (
+                            <td {...cell.getCellProps()}>
+                              {cell.render("Cell")}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <h4>Não foi Encontrado Logs para esse Agendamento.</h4>
+            )}
           </div>
         </Modal.Body>
       </Modal>
