@@ -6,7 +6,7 @@ export const INSTANCES_COLUMNS: any = [
   },
   {
     Header: "Instância ou Id",
-    accessor: "id",
+    accessor: "instance",
     className: "text-center ",
   },
   {
