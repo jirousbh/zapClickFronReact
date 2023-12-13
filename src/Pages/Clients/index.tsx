@@ -36,6 +36,7 @@ import {
 } from "../../services/ClientsService";
 import { parseClient } from "../../utils/common";
 import Select from "../../components/Select";
+import { setClients } from "../../redux/actions/clients";
 
 export default function Clients() {
   const dispatch = useDispatch();
@@ -207,6 +208,8 @@ export default function Clients() {
 
         setSingleselect(selectCompanies[0]);
         setCompaniesOptions(selectCompanies);
+        console.log(clientsMapped)
+        dispatch(setClients(clientsMapped))
         setClientsFormated(clientsMapped);
       }
     } catch (error) {

@@ -6,6 +6,7 @@ import { campaignReducer } from "./campaign";
 import { companiesReducer } from "./companies";
 import { instancesReducer } from "./instances";
 import { shortenersReducer } from "./shorteners";
+import { clientsReducer } from "./clients";
 
 const rootred = combineReducers({
   cartreducer,
@@ -14,6 +15,7 @@ const rootred = combineReducers({
   companiesReducer,
   instancesReducer,
   shortenersReducer,
+  clientsReducer,
 });
 
 export default rootred;

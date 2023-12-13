@@ -35,8 +35,8 @@ const cacheInvalidation = [
     clean: ["fetchInstances", "getInstance"],
   },
   {
-    onCall: ["scheduleAddJob", "editJob", "deleteJob", "testSendJob"],
-    clean: ["fetchJobs", "fetchJobLogs"],
+    onCall: ["editUser", "createUser", "addAlternateEmail"],
+    clean: ["fetchUsers", "fetchUserAlternateEmails"],
   },
 ];
 

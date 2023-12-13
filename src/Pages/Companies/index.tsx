@@ -152,7 +152,6 @@ export default function Companies() {
       if (fetchCompaniesResult?.data.length) {
         const companiesMapped = fetchCompaniesResult.data.map(
           (company: any) => {
-            console.log(company, "@@@ map");
             return {
               id: company.id,
               name: company.name,

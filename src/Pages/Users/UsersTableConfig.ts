@@ -11,12 +11,12 @@ export const USERS_COLUMNS: any = [
   },
   {
     Header: "Dt. Criação",
-    accessor: "creation",
+    accessor: "creationTime",
     className: "text-center ",
   },
   {
     Header: "Ult. Login",
-    accessor: "lastLogin",
+    accessor: "lastSignInTime",
     className: "text-center ",
   },
   {
@@ -31,7 +31,7 @@ export const USERS_COLUMNS: any = [
   },
   {
     Header: "Plano",
-    accessor: "plans",
+    accessor: "plan",
     className: "text-center ",
   },
   {
