@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   useTable,
   useSortBy,
@@ -6,7 +6,6 @@ import {
   usePagination,
 } from "react-table";
 import {
-  Breadcrumb,
   Col,
   Row,
   Card,
@@ -422,7 +421,6 @@ export default function Instances() {
                     <p className="mg-b-10">Empresa</p>
                     <div className=" SlectBox">
                       <Select
-                        select={singleselect}
                         options={instanceOptions}
                         onChange={(e) =>
                           setSingleselect({ value: e.target.value })

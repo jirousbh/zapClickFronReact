@@ -59,6 +59,17 @@ const fetchUserAlternateEmails = async (email: string) => {
   return emails;
 };
 
+const delUserAlternateEmail = async (userEmail: string, oldEmail: string) => {
+  const emails = await FirebaseService.callFirebaseFunction(
+    "delUserAlternateEmail",
+    {
+      userEmail,
+      oldEmail
+    }
+  );
+  return emails;
+};
+
 const fetchAlertNumber = async () => {
   const fetchAlertNumberResult = await FirebaseService.callFirebaseFunction(
     "fetchAlertNumber"
@@ -98,5 +109,6 @@ export {
   editUser,
   createUser,
   addNewEmail,
-  fetchUserAlternateEmails
+  fetchUserAlternateEmails,
+  delUserAlternateEmail
 };

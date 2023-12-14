@@ -30,12 +30,11 @@ import {
   editJob,
   getJobsList,
   getJobLogs,
-  sendJob
+  sendJob,
 } from "../../services/JobsService";
 import Select from "../../components/Select";
 
 export default function Jobs() {
-  const [showEndedCampaigns, setShowEndedCampaigns] = useState(false);
   const [error, setError] = useState(false);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [jobsList, setJobsList] = useState([]);
@@ -149,6 +148,12 @@ export default function Jobs() {
       minInterval: String(job.minInterval),
       maxInterval: String(job.maxInterval),
     });
+
+    setSingleselect({
+      value: String(job.statusId),
+      label: `${job.statusId} - ${job.description}`,
+    });
+
     const status = [
       {
         value: "0",
@@ -161,12 +166,11 @@ export default function Jobs() {
       { value: "5", label: "5 - A enviar a confirmação" },
     ];
 
-    setSingleselect({
-      value: String(job.statusId),
-      label: `${job.statusId} - ${job.description}`,
-    });
-
-    setJobOptions(status);
+    const statusSelected = status.map((st) => ({
+      ...st,
+      selected: st.value === String(job.statusId),
+    }));
+    setJobOptions(statusSelected);
     setOpenModalEdit(true);
   };
 
@@ -212,16 +216,16 @@ export default function Jobs() {
 
   const openModalSendJob = (id, name) => {
     setJobName(name);
-    setJobId(id)
+    setJobId(id);
     setOpenModalSend(true);
   };
 
   const sendJobList = async () => {
     try {
-      await sendJob(jobId, formValues.phone)
+      await sendJob(jobId, formValues.phone);
       closeModalSendJob();
-    } catch(error) {
-      console.log(`[sendJob] - ${error}`)
+    } catch (error) {
+      console.log(`[sendJob] - ${error}`);
     }
   };
 
@@ -315,20 +319,6 @@ export default function Jobs() {
         concludedWithError: calculateJobs(jobs, 3),
       });
     }
-    /*     } else {
-      setJobsList([
-        {
-          jobId: "",
-          name: "Nenhum Dado Encontrado...",
-          projectId: "",
-          startTime: "",
-          groups: "",
-          interval: "",
-          status: "",
-          options: "",
-        },
-      ]);
-    } */
   };
 
   const loadJobs = async function (showEnded: boolean = false) {

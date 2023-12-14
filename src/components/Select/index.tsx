@@ -3,12 +3,14 @@ import React from "react";
 // import { Container } from './styles';
 
 interface SelectProps {
-  select: any | null;
   options: Array<any>;
   onChange: (e: any) => void;
 }
 
-const Select: React.FC<SelectProps> = ({ select, options, onChange }) => {
+const Select: React.FC<SelectProps> = ({
+  options,
+  onChange,
+}) => {
   return (
     <select
       style={{
@@ -20,11 +22,12 @@ const Select: React.FC<SelectProps> = ({ select, options, onChange }) => {
       }}
       onChange={onChange}
     >
-      {!!select?.value && (
-        <option defaultValue={select?.value}>{select?.label}</option>
-      )}
       {options.map((option: any) => (
-        <option key={`@@key-${option.value}`} value={option.value}>
+        <option
+          key={`@@key-${option.value}`}
+          value={option.value}
+          selected={option.selected}
+        >
           {option.label}
         </option>
       ))}

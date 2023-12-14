@@ -462,7 +462,6 @@ export default function Clients() {
                     <p className="mg-b-10">Empresa</p>
                     <div className=" SlectBox">
                       <Select
-                        select={singleselect}
                         options={companiesOptions}
                         onChange={(e) =>
                           setSingleselect({ value: e.target.value })

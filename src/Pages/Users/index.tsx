@@ -22,6 +22,7 @@ import Select from "../../components/Select";
 import {
   addNewEmail,
   createUser,
+  delUserAlternateEmail,
   editUser,
   fetchUserAlternateEmails,
   fetchUsers,
@@ -29,19 +30,32 @@ import {
 import { getClient } from "../../services/ClientsService";
 import { getCompaniesList } from "../../services/CompaniesService";
 import { formatDate } from "../../utils/dates";
+import Swal from "sweetalert2";
+
+const INITIAL_STATE = {
+  company: { label: "Selecione uma Empresa", value: "", selected: true },
+  client: { label: "Selecione um Cliente", value: "" },
+};
 
 export default function Users() {
   const [users, setUsers] = useState<any>([]);
   const [userModal, setUserModal] = useState(false);
   const [emailModal, setEmailModal] = useState(false);
-  const [singleselect, setSingleselect] = useState<any>("");
-  const [singleselectClient, setSingleselectClient] = useState<any>("");
-  const [companyOptions, setCompanyOptionsOptions] = useState<any>([]);
-  const [clientOptions, setClientOptionsOptions] = useState<any>([]);
+  const [deleteEmailModal, setDeleteEmailModal] = useState(false);
+  const [singleSelectCompany, setSingleSelectCompany] = useState<any>("");
+  const [singleSelectClient, setSingleSelectClient] = useState<any>("");
+  const [companyOptions, setCompanyOptions] = useState<any>([
+    INITIAL_STATE.company,
+  ]);
+  const [clientOptions, setClientOptions] = useState<any>([
+    INITIAL_STATE.client,
+  ]);
   const [emails, setEmails] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [emailDelete, setEmailDelete] = useState("");
 
   const [formValues, setFormValues] = useState({
-    type: "Cadastrar Cliente",
+    type: "Cadastrar Usuário",
     id: "",
     name: "",
     email: "",
@@ -145,6 +159,22 @@ export default function Users() {
     });
   }, []);
 
+  const formatSelectCompany = useCallback(async () => {
+    const { data: clients } = await getClient(null, false);
+    const { data: companies } = await getCompaniesList(null, false);
+
+    const company = companies.map((cmp: any) => {
+      return {
+        label: cmp.name,
+        value: cmp.id,
+        selected: false,
+      };
+    });
+
+    setClients(clients);
+    setCompanyOptions([...companyOptions, ...company]);
+  }, [companyOptions]);
+
   const getUsers = useCallback(async () => {
     const { data: users } = await fetchUsers();
     const formatUser = parseUsers(users);
@@ -166,13 +196,15 @@ export default function Users() {
   const saveUser = async () => {
     try {
       const { id, name, email, password } = formValues;
+      console.log(singleSelectCompany.value, singleSelectClient.value);
+
       const editPayload = {
         name,
         email,
         password,
         userId: id,
-        companyId: singleselect.value,
-        clientId: singleselectClient.value,
+        companyId: singleSelectCompany.value,
+        clientId: singleSelectClient.value,
       };
       if (id) {
         await editUser(editPayload);
@@ -181,8 +213,8 @@ export default function Users() {
           name,
           email,
           password,
-          companyId: singleselect.value,
-          clientId: singleselectClient.value,
+          companyId: singleSelectCompany.value,
+          clientId: singleSelectClient.value,
         });
       }
 
@@ -215,9 +247,15 @@ export default function Users() {
     const { data: alternateEmails } = await fetchUserAlternateEmails(
       user.email
     );
-    setEmails(alternateEmails);
 
-    console.log(alternateEmails);
+    console.log(alternateEmails)
+    const newAlternateEmails = alternateEmails.filter(
+      (alt: any) => alt !== user.email
+    );
+
+    setEmails(newAlternateEmails);
+
+    console.log(newAlternateEmails);
     setEmailModal(true);
   };
 
@@ -229,39 +267,50 @@ export default function Users() {
       email: "",
       password: "",
     });
+
+    setSingleSelectCompany("");
+    setSingleSelectClient("");
+
     setUserModal(false);
   };
 
-  const removeEmailAlternate = (email: string) => {
-    window.alert(`Deseja remover o e-mail ${email}?`);
-    if (window.confirm("OK")) {
-      console.log("user removed");
-    } else {
-      console.log("user not removed");
+  const openRemoveEmailAlternate = (email: string) => {
+    setEmailDelete(email);
+    setEmailModal(false);
+    setDeleteEmailModal(true);
+  };
+
+  const closeRemoveEmailAlternate = () => {
+    setDeleteEmailModal(false);
+    setEmailModal(true);
+  };
+
+  const removeEmailAlternate = async () => {
+    try {
+      await delUserAlternateEmail(formEmailValues.email, emailDelete);
+      setEmails((prevState) => prevState.filter((prv) => prv !== emailDelete));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setDeleteEmailModal(false);
+      setEmailModal(true);
     }
   };
 
-  const formatSelectCompany = async () => {
-    const { data: clients } = await getClient(null, false);
-    const { data: companies } = await getCompaniesList(null, false);
+  useEffect(() => {
+    const filterClient = clients.filter(
+      (clt: any) => clt.companyId === singleSelectCompany.value
+    );
 
-    const company = companies.map((cmp: any) => {
-      return {
-        label: cmp.name,
-        value: cmp.id,
-      };
-    });
-
-    const client = clients.map((clt: any) => {
+    const client = filterClient.map((clt: any) => {
       return {
         label: clt.name,
         value: clt.id,
       };
     });
 
-    setCompanyOptionsOptions(company);
-    setClientOptionsOptions(client);
-  };
+    setClientOptions(client);
+  }, [clients, singleSelectCompany.value]);
 
   useEffect(() => {
     getUsers();
@@ -532,32 +581,34 @@ export default function Users() {
                     <p className="mg-b-10">Empresa</p>
                     <div className=" SlectBox">
                       <Select
-                        select={singleselect}
                         options={companyOptions}
                         onChange={(e) =>
-                          setSingleselect({ value: e.target.value })
+                          setSingleSelectCompany({ value: e.target.value })
                         }
                       />
                     </div>
                   </div>
                 </Col>
               </Row>
-              <Row className="mb-2">
-                <Col lg={12}>
-                  <div className="mb-4">
-                    <p className="mg-b-10">Cliente</p>
-                    <div className=" SlectBox">
-                      <Select
-                        select={singleselectClient}
-                        options={clientOptions}
-                        onChange={(e) =>
-                          setSingleselectClient({ value: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                </Col>
-              </Row>
+              {clientOptions &&
+                !!clientOptions.length &&
+                clientOptions[0].value && (
+                  <Row className="mb-2">
+                    <Col lg={12}>
+                      <div className="mb-4">
+                        <p className="mg-b-10">Cliente</p>
+                        <div className=" SlectBox">
+                          <Select
+                            options={clientOptions}
+                            onChange={(e) =>
+                              setSingleSelectClient({ value: e.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                )}
               <Row className="mb-2"></Row>
               <Button
                 variant=""
@@ -630,24 +681,28 @@ export default function Users() {
                   </Form.Group>
                 </Col>
               </Row>
-              <Row className="mb-2">
-                <Col lg={12}>
-                  <div>
-                    <h6>Emails Alternativos Cadastrados</h6>
+              {!!emails.length && (
+                <Row className="mb-2">
+                  <Col lg={12}>
                     <div>
-                      {emails.map((email, index) => (
-                        <li key={`${email}-${index}`}>
-                          {email}{" "}
-                          <i
-                            className="fas fa-trash text-danger delUserEmail"
-                            onClick={() => removeEmailAlternate(email)}
-                          ></i>
-                        </li>
-                      ))}
+                      <h6>Emails Alternativos Cadastrados</h6>
+                      <div>
+                        {emails.map((email, index) => (
+                          <li key={`${email}-${index}`} style={{ margin: 15 }}>
+                            {email}
+                            {"   "}
+                            <i
+                              className="fas fa-trash text-danger delUserEmail"
+                              style={{ cursor: "pointer" }}
+                              onClick={() => openRemoveEmailAlternate(email)}
+                            ></i>
+                          </li>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </Col>
-              </Row>
+                  </Col>
+                </Row>
+              )}
               <Row className="mb-2"></Row>
               <Button
                 variant=""
@@ -664,6 +719,43 @@ export default function Users() {
                 className="btn ripple btn-danger pd-x-25"
                 type="button"
                 onClick={() => setEmailModal(false)}
+              >
+                Fechar
+              </Button>{" "}
+            </div>
+          </Modal.Body>
+        </Modal>
+        <Modal show={deleteEmailModal}>
+          <Modal.Header>
+            <Modal.Title>Excluir Email</Modal.Title>
+            <Button
+              variant=""
+              className="btn btn-close"
+              onClick={() => closeRemoveEmailAlternate()}
+            >
+              x
+            </Button>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="">
+              <Row className="mb-2">
+                <h3>Deseja excluir o email {emailDelete}?</h3>
+              </Row>
+              <Button
+                variant=""
+                aria-label="Confirm"
+                className="btn ripple btn-primary pd-x-25"
+                type="button"
+                onClick={() => removeEmailAlternate()}
+              >
+                Confirmar
+              </Button>{" "}
+              <Button
+                variant=""
+                aria-label="Close"
+                className="btn ripple btn-danger pd-x-25"
+                type="button"
+                onClick={() => closeRemoveEmailAlternate()}
               >
                 Fechar
               </Button>{" "}
