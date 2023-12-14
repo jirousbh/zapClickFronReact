@@ -151,6 +151,19 @@ export const MENUITEMS = [
         selected: false,
         children: [],
       },
+      {
+        title: "Perfil e Assinatura",
+        icon: (
+          <div className="side-menu__icon">
+            <i className="fe fe-message-square"></i>
+          </div>
+        ),
+        path: `${process.env.PUBLIC_URL}/perfil`,
+        type: "link",
+        active: false,
+        selected: false,
+        children: [],
+      },
       // {
       //   title: "Dashboards",
       //   icon: (

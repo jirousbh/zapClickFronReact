@@ -5,6 +5,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Auth from "./Authentication/auth";
 import "./index.scss";
 import Loader from "./shade/Loaders/Loaders";
+import Perfil from "./Pages/Perfil";
+
 const App = React.lazy(() => import("../src/shade/layouts/App"));
 const Switcherapp = React.lazy(
   () => import("../src/shade/layouts/Switcherapp")
@@ -429,6 +431,10 @@ root.render(
               <Route
                 path={`${process.env.PUBLIC_URL}/shortener-new`}
                 element={<ShortenerNew />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/perfil`}
+                element={<Perfil />}
               />
               {/* <Route
               path={`${process.env.PUBLIC_URL}/dashboard/dashboard-1`}

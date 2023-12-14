@@ -208,7 +208,6 @@ export default function Clients() {
 
         setSingleselect(selectCompanies[0]);
         setCompaniesOptions(selectCompanies);
-        console.log(clientsMapped)
         dispatch(setClients(clientsMapped))
         setClientsFormated(clientsMapped);
       }
