@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ReactApexChart from "react-apexcharts";
 import { useNavigate } from "react-router-dom";
-import Select, { SingleValue } from "react-select";
+import { SingleValue } from "react-select";
 import {
   useTable,
   useSortBy,
@@ -23,6 +23,7 @@ import {
 import { getCampaignsList } from "../../services/CampaignsService";
 import { setCampaignsList } from "../../redux/actions/campaign";
 import { createGroup, updateGroup } from "../../services/GroupsService";
+import Select from "../../components/Select";
 
 export default function NewGroup() {
   let navigate = useNavigate();
@@ -34,12 +35,12 @@ export default function NewGroup() {
   const selectedGroup = useSelector(
     (state: any) => state.groupReducer.selectedGroup
   );
+  console.log(selectedGroup, "@@@ selectedGroup");
   const selectedCampaignId = useSelector(
     (state: any) => state.campaignReducer.selectedCampaignId
   );
 
   const [campaignSelected, setCampaignSelected] = useState<any>(null);
-  const [singleselect, setSingleselect] = useState<SingleValue<any>>(null);
   const [options, setOptions] = useState<any>([]);
 
   const [createdModalIsOpen, setCreatedModalIsOpen] = useState(false);
@@ -47,18 +48,19 @@ export default function NewGroup() {
 
   const [err, setError] = useState("");
   const [data, setData] = useState({
-    url: "",
+    url: selectedGroup?.projectId ? selectedGroup.url : "",
   });
 
   const { url } = data;
 
-  const changeHandler = (e: any) => {
-    setData({ ...data, [e.target.name]: e.target.value });
-    setError("");
+  const handleChangeValue = (name: string, value: string) => {
+    setData({
+      ...data,
+      [name]: value,
+    });
   };
 
   const onSelect = async (value: any) => {
-    setSingleselect(value);
     setCampaignSelected(value);
   };
 
@@ -84,7 +86,7 @@ export default function NewGroup() {
     if (campaignsMapped.length) {
       if (selectedCampaignId) {
         const selectedCampaign = campaignsMapped.find(
-          (campaign: any) => campaign.value == selectedCampaignId
+          (campaign: any) => campaign.value === selectedCampaignId
         );
 
         if (selectedCampaign) onSelect(selectedCampaign);
@@ -104,22 +106,17 @@ export default function NewGroup() {
     }
   };
 
-  const saveGroupData = () => {
+  const saveGroupData = async () => {
     try {
       selectedGroup
-        ? updateGroup(url, selectedGroup.id, selectedGroup.projectId)
-        : createGroup(url, singleselect.value);
+        ? await updateGroup(url, selectedGroup?.id, campaignSelected.value)
+        : await createGroup(url, campaignSelected.value);
 
       setCreatedModalIsOpen(true);
     } catch (error) {
+      console.log(error);
       setErrorModalIsOpen(true);
     }
-  };
-
-  const saveIsDisabled = () => {
-    if (selectedGroup) return !url?.length;
-
-    return !url?.length && !singleselect.value;
   };
 
   useEffect(() => {
@@ -150,32 +147,30 @@ export default function NewGroup() {
           <Form>
             <Col xl={10} lg={12} md={12} xs={12}>
               <div>
-                <div className="mb-4">
+                <Form.Group className="form-group">
+                  <Form.Label className="">Campanha</Form.Label>{" "}
                   <div className=" SlectBox">
                     <Select
-                      defaultValue={singleselect}
-                      onChange={onSelect}
                       options={options}
-                      placeholder="Selecione uma campanha"
-                      classNamePrefix="selectform"
-                      isDisabled={!!selectedGroup}
+                      onChange={(e) =>
+                        setCampaignSelected({ value: e.target.value })
+                      }
                     />
                   </div>
-                </div>
+                </Form.Group>
               </div>
             </Col>
-
             <Row>
               <Col xl={10} lg={12} md={12} xs={12}>
                 <Form.Group className="form-group">
                   <Form.Label className="">URL</Form.Label>{" "}
                   <Form.Control
                     className="form-control"
-                    placeholder="Url do grupo"
-                    name="name"
+                    placeholder="Ex: https://chat.whatsapp.com/B9zVoUON2LBAZRjuG0eQd"
+                    name="url"
+                    value={data.url}
                     type="text"
-                    value={url}
-                    onChange={changeHandler}
+                    onChange={(e) => handleChangeValue("url", e.target.value)}
                     required
                   />
                 </Form.Group>
@@ -190,9 +185,6 @@ export default function NewGroup() {
             onClick={() => saveGroupData()}
             variant=""
             className="btn me-2 btn-primary mb-4"
-            disabled={
-              selectedGroup ? !url?.length : !url?.length && !singleselect
-            }
           >
             {selectedGroup ? "Alterar" : "Salvar"}
           </Button>

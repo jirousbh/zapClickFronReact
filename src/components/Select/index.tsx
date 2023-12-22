@@ -5,11 +5,13 @@ import React from "react";
 interface SelectProps {
   options: Array<any>;
   onChange: (e: any) => void;
+  disabled?: boolean;
 }
 
 const Select: React.FC<SelectProps> = ({
   options,
   onChange,
+  disabled = false,
 }) => {
   return (
     <select
@@ -21,6 +23,7 @@ const Select: React.FC<SelectProps> = ({
         paddingLeft: 10,
       }}
       onChange={onChange}
+      disabled={disabled}
     >
       {options.map((option: any) => (
         <option

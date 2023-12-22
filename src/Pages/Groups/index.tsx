@@ -1,9 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
-
 import { useDispatch, useSelector } from "react-redux";
 import QRCodeStyling from "qr-code-styling";
-import ReactApexChart from "react-apexcharts";
-import Select, { SingleValue } from "react-select";
+import { SingleValue } from "react-select";
 import { Link, useNavigate } from "react-router-dom";
 import {
   useTable,
@@ -12,19 +10,14 @@ import {
   usePagination,
 } from "react-table";
 import {
-  Breadcrumb,
   Col,
   Row,
   Card,
   Button,
-  ProgressBar,
   OverlayTrigger,
   Tooltip,
 } from "react-bootstrap";
-
-import * as Dashboarddata from "../Dashboard/data";
-import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
-
+import { GlobalFilter } from "../Dashboard/data";
 import { GROUPS_COLUMNS } from "./GroupsTableConfig";
 import {
   setCampaignsList,
@@ -35,6 +28,7 @@ import { secondsToDhms, toDateTime } from "../../utils/dates";
 import { getGroupsByCampaign } from "../../services/GroupsService";
 import { pad } from "../../utils/number";
 import { setSelectedGroup } from "../../redux/actions/groups";
+import Select from "../../components/Select";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -46,20 +40,19 @@ export default function Dashboard() {
     (state: any) => state.campaignReducer.selectedCampaignId
   );
 
-  const [campaignSelected, setCampaignSelected] = useState<any>(null);
-  const [singleselect, setSingleselect] = useState<SingleValue<number>>(null);
-  const [options, setOptions] = useState<any>([]);
-
   const [campaignGroups, setCampaignGroups] = useState<any>([]);
+
+  const [singleSelectCampaign, setSingleSelectCampaign] = useState<any>(null);
+  const [campaignOptions, setCampaignOptions] = useState<any>([]);
 
   let navigate = useNavigate();
 
   const routeChange = () => {
-    if (!campaignSelected) return;
+    if (!singleSelectCampaign) return;
 
     let path = `${process.env.PUBLIC_URL}/new-campaign/`;
 
-    dispatch(setSelectedCampaignId(campaignSelected.id));
+    dispatch(setSelectedCampaignId(singleSelectCampaign.id));
 
     navigate(path);
   };
@@ -94,7 +87,7 @@ export default function Dashboard() {
   };
 
   const setupGroups = async (campaign: any) => {
-    const groupsResponse = await getGroupsByCampaign(campaign.id);
+    const groupsResponse = await getGroupsByCampaign(campaign.value);
 
     if (groupsResponse?.data?.length) {
       const groupsList = groupsResponse?.data?.map((group: any) => {
@@ -116,12 +109,14 @@ export default function Dashboard() {
           linkId: group.id,
           id: pad(group.id),
           url: (
-            <Link
-              to={`${group.url}`}
-              className={group.isFull ? "bg-danger" : ""}
+            <a
+              href={`${group.url}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#2c7be5" }}
             >
               {urtToShow}
-            </Link>
+            </a>
           ),
           urlFull: group.url,
           clickCount: group.clickCount + "/" + group.maxClicks,
@@ -225,11 +220,19 @@ export default function Dashboard() {
     }
   };
 
-  const onSelect = async (value: any) => {
-    setSingleselect(value);
-    setCampaignSelected(value);
+  const onSelect = async (campaign: any) => {
+    console.log(campaign, "@@@ campaign");
+    setSingleSelectCampaign(campaign);
 
-    setupGroups(value);
+    setupGroups(campaign);
+  };
+
+  const handleCampaignSelect = ({ value }: any) => {
+    const selectedCampaign = campaignOptions.find(
+      (campaign: any) => campaign.value === value
+    );
+    setSingleSelectCampaign(selectedCampaign);
+    setupGroups(singleSelectCampaign);
   };
 
   const {
@@ -253,13 +256,13 @@ export default function Dashboard() {
   const { globalFilter, pageIndex, pageSize } = state;
 
   const setQrCode = () => {
-    if (!campaignSelected) return;
+    if (!singleSelectCampaign) return;
 
     const qrCodeStyling = new QRCodeStyling({
       width: 280,
       height: 280,
       type: "svg",
-      data: campaignSelected?.data?.entryLink || "",
+      data: singleSelectCampaign?.data?.entryLink || "",
       dotsOptions: {
         color: "#000000",
         type: "rounded",
@@ -305,23 +308,32 @@ export default function Dashboard() {
       };
     });
 
-    if (campaignsMapped.length) {
-      if (selectedCampaignId) {
-        const selectedCampaign = campaignsMapped.find(
-          (campaign: any) => campaign.id === selectedCampaignId
-        );
+    if (!campaignsMapped.length) return;
 
-        if (selectedCampaign) {
-          onSelect(selectedCampaign);
+    if (!!selectedCampaignId) {
+      /*  */
 
-          return setOptions(campaignsMapped);
-        }
-      }
+      const campaigns = campaignsMapped.map((campaign: any) => ({
+        ...campaign,
+        selected: campaign.value === selectedCampaignId,
+      }));
 
-      onSelect(campaignsMapped[0]);
+      const selectedCampaign = campaigns.find(
+        (campaign: any) => campaign.value === selectedCampaignId
+      );
 
-      return setOptions(campaignsMapped);
+      onSelect(selectedCampaign);
+      setCampaignOptions(campaigns);
+      return;
     }
+
+    const campaigns = campaignsMapped.map((campaign: any, index: any) => ({
+      ...campaign,
+      selected: index === 0,
+    }));
+
+    onSelect(campaigns[0]);
+    setCampaignOptions(campaigns);
   };
 
   useEffect(() => {
@@ -330,7 +342,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setQrCode();
-  }, [campaignSelected]);
+  }, []);
 
   return (
     <React.Fragment>
@@ -339,9 +351,7 @@ export default function Dashboard() {
           <h1 className="main-content-title mg-b-0 mg-b-lg-1">Grupos</h1>
         </div>
       </div>
-      {/* <!-- /breadcrumb --> */}
 
-      {/* <!-- row --> */}
       <Row>
         <Col xl={6} lg={12} md={12} xs={12}>
           <div>
@@ -349,11 +359,10 @@ export default function Dashboard() {
               <p className="mg-b-10">Campanha:</p>
               <div className=" SlectBox">
                 <Select
-                  defaultValue={singleselect}
-                  onChange={onSelect}
-                  options={options}
-                  placeholder="Selecione uma campanha"
-                  classNamePrefix="selectform"
+                  options={campaignOptions}
+                  onChange={(e) =>
+                    handleCampaignSelect({ value: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -363,7 +372,7 @@ export default function Dashboard() {
             </h6>
           </div>
         </Col>
-        {singleselect ? (
+        {singleSelectCampaign ? (
           <Col
             xl={6}
             lg={12}
@@ -397,10 +406,7 @@ export default function Dashboard() {
           </Col>
         ) : null}
       </Row>
-      {/* <!-- row closed --> */}
-
-      {/* <!-- row --> */}
-      {campaignSelected ? (
+      {singleSelectCampaign ? (
         <Row>
           <Col xl={3} lg={12} md={12} xs={12}>
             <Card className="sales-card">
@@ -412,7 +418,9 @@ export default function Dashboard() {
                     </div>
                     <div className="pb-0 mt-0">
                       <div className="d-flex">
-                        <h4 className="tx-22 font-weight-semibold mb-2">5</h4>
+                        <h4 className="tx-22 font-weight-semibold mb-2">
+                          {singleSelectCampaign?.data?.totalLinks}
+                        </h4>
                       </div>
                     </div>
                   </div>
@@ -435,7 +443,9 @@ export default function Dashboard() {
                     </div>
                     <div className="pb-0 mt-0">
                       <div className="d-flex">
-                        <h4 className="tx-22 font-weight-semibold mb-2">5</h4>
+                        <h4 className="tx-22 font-weight-semibold mb-2">
+                          {singleSelectCampaign?.data?.totalLinksClickCount}
+                        </h4>
                       </div>
                     </div>
                   </div>
@@ -460,7 +470,8 @@ export default function Dashboard() {
                       <div className="d-flex">
                         <h4 className="tx-22 font-weight-semibold mb-2">
                           {toDateTime(
-                            campaignSelected.data.endDate["_seconds"] + 10800
+                            singleSelectCampaign?.data?.endDate["_seconds"] +
+                              10800
                           )
                             .toLocaleString("pt-BR")
                             .substring(0, 10)}
@@ -480,14 +491,21 @@ export default function Dashboard() {
           <Col xl={3} lg={12} md={12} xs={12}>
             <Card className="sales-card">
               <Row>
-                <div className="col-8">
+                <div className="col-8 ">
                   <div className="ps-4 pt-4 pe-3 pb-4">
                     <div className="">
                       <h6 className="mb-2 tx-12">Links de acesso</h6>
                     </div>
                     <div className="pb-0 mt-0">
                       <div className="d-flex">
-                        <h4 className="tx-22 font-weight-semibold mb-2">10</h4>
+                        <a
+                          className="tx-13 font-weight-semibold mb-2"
+                          href={`https://wtzp.link/r/${singleSelectCampaign?.data?.entryLink}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {`https://wtzp.link/r/${singleSelectCampaign?.data?.entryLink}`}
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -521,9 +539,6 @@ export default function Dashboard() {
           </Col>
         </Row>
       ) : null}
-      {/* <!-- row closed --> */}
-
-      {/* <!-- row  --> */}
       <Row>
         <Col sm={12} className="col-12 d-flex justify-content-end">
           <Button
@@ -542,9 +557,6 @@ export default function Dashboard() {
           </Button>
         </Col>
       </Row>
-      {/* <!-- row closed --> */}
-
-      {/* <!-- row  --> */}
       <Row>
         <Col sm={12} className="col-12">
           <Card>
