@@ -29,7 +29,10 @@ import {
 import { COLUMNS, GlobalFilter } from "./data";
 
 import { toDateTime } from "../../utils/dates";
-import { getCampaignsList } from "../../services/CampaignsService";
+import {
+  getCampaignsList,
+  updateCampaign,
+} from "../../services/CampaignsService";
 
 export default function Dashboard() {
   let navigate = useNavigate();
@@ -41,6 +44,31 @@ export default function Dashboard() {
 
   const [loadingCampaigns, setLoadingCampaigns] = useState(false);
   const [campaignsListLocal, setCampaignsListLocal] = useState([]);
+  const [disabledCampaign, setDisabledCampaign] = useState(false);
+  const [disabledStatus, setDisabledStatus] = useState(null);
+
+  const openDisabledCampaignModal = (campaignId: string, active: string) => {
+    console.log({ project: campaignId, changes: { active } });
+    setDisabledStatus({ campaignId, active });
+    setDisabledCampaign(true);
+  };
+
+  const handleDisabledCampaign = async () => {
+    try {
+      console.log(
+        disabledStatus,
+      );
+      await updateCampaign(
+        { active: false },
+        disabledStatus.campaignId
+      );
+      loadCampaigns();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setDisabledCampaign(false);
+    }
+  };
 
   const [topCardsInfo, setTopCardsInfo] = useState({
     totalCampaigns: 0,
@@ -132,7 +160,9 @@ export default function Dashboard() {
                 checked={campaign.active}
                 type="switch"
                 id="custom-switch"
-                onChange={() => {}}
+                onChange={() =>
+                  openDisabledCampaignModal(campaign.id, campaign.active)
+                }
               />
             </Form>
           ),
@@ -644,6 +674,77 @@ export default function Dashboard() {
             >
               Fechar
             </Button>{" "}
+          </div>
+        </Modal.Body>
+      </Modal>
+      <Modal show={disabledCampaign}>
+        <Modal.Header>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={() => setDisabledCampaign(false)}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="">
+            <Row className="mb-2">
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <h3>
+                  Deseja{" "}
+                  <span>{!disabledStatus?.active ? "ativar" : "desativar"} </span>
+                  campanha
+                </h3>
+                <div
+                  style={{
+                    textAlign: "center",
+                    marginTop: 10,
+                    marginBottom: 10,
+                  }}
+                >
+                  <p>
+                    Confirme sua ação para evitar que uma campanha não seja
+                    desativada por engano
+                  </p>
+                </div>
+              </div>
+            </Row>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Button
+                variant=""
+                aria-label="Confirm"
+                className="btn ripple btn-primary pd-x-25"
+                type="button"
+                onClick={() => handleDisabledCampaign()}
+                style={{ width: "300px", marginTop: 10, marginBottom: 20 }}
+              >
+                Confirmar
+              </Button>{" "}
+              <Button
+                variant=""
+                aria-label="Close"
+                className="btn ripple btn-danger pd-x-25"
+                type="button"
+                onClick={() => setDisabledCampaign(false)}
+                style={{ width: "300px", marginBottom: 10 }}
+              >
+                Fechar
+              </Button>{" "}
+            </div>
           </div>
         </Modal.Body>
       </Modal>

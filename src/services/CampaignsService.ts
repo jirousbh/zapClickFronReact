@@ -1,14 +1,14 @@
 import * as FirebaseService from "./FirebaseService";
 
 const getCampaignsList = async (showEnded: boolean = false) => {
-    const fetchProjResult = await FirebaseService.callFirebaseFunction(
-      "fetchProjects",
-      {
-        showEnded,
-      }
-    );
+  const fetchProjResult = await FirebaseService.callFirebaseFunction(
+    "fetchProjects",
+    {
+      showEnded,
+    }
+  );
 
-    return fetchProjResult;
+  return fetchProjResult;
 
   // return {
   //   data: [
@@ -59,8 +59,23 @@ const updateCampaign = async (editedCampaignData: any, campaignId: any) => {
       ...editedCampaignData,
     },
   });
+  return response;
+};
+
+const getLeadsTableByProjectId = async (projectId: any) => {
+  const response = await FirebaseService.callFirebaseFunction(
+    "fetchLeadsTableByProjectId",
+    {
+      projectId,
+    }
+  );
 
   return response;
 };
 
-export { getCampaignsList, createCampaign, updateCampaign };
+export {
+  getCampaignsList,
+  createCampaign,
+  updateCampaign,
+  getLeadsTableByProjectId,
+};

@@ -1,9 +1,8 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 
 import ReactApexChart from "react-apexcharts";
 import ReactDatePicker from "react-datepicker";
 import Creatable from "react-select/creatable";
-import Select, { SingleValue } from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 import {
   useTable,
@@ -39,6 +38,13 @@ import {
   updateCampaign,
 } from "../../services/CampaignsService";
 import { toDateTime } from "../../utils/dates";
+import { getClient } from "../../services/ClientsService";
+import Select from "../../components/Select";
+
+const INITIAL_STATE = {
+  company: { label: "Selecione uma Empresa", value: "", selected: true },
+  client: { label: "Selecione um Cliente", value: "", selected: true },
+};
 
 export default function NewCampaign() {
   const dispatch = useDispatch();
@@ -52,6 +58,7 @@ export default function NewCampaign() {
   const selectedCampaignId = useSelector(
     (state: any) => state.campaignReducer.selectedCampaignId
   );
+
   const instancesList = useSelector(
     (state: any) => state.instancesReducer.instancesList
   );
@@ -59,9 +66,102 @@ export default function NewCampaign() {
   const [createdModalIsOpen, setCreatedModalIsOpen] = useState(false);
   const [errorModalIsOpen, setErrorModalIsOpen] = useState(false);
 
-  const [companySelected, setCompanySelected] = useState("");
-  const [companiesOptions, setCompanyOptions] = useState([]);
   const [instancesOptions, setInstancesOptions] = useState([]);
+
+  // Start: Select company and clients
+  const [singleSelectCompany, setSingleSelectCompany] = useState<any>("");
+  const [singleSelectClient, setSingleSelectClient] = useState<any>("");
+  const [companyOptions, setCompanyOptions] = useState<any>([
+    INITIAL_STATE.company,
+  ]);
+  const [clientOptions, setClientOptions] = useState<any>([
+    INITIAL_STATE.client,
+  ]);
+  const [clients, setClients] = useState([]);
+
+  const formatSelectCompany = useCallback(
+    async (companyId = null) => {
+      debugger;
+      const { data: clients } = await getClient(null, false);
+      const { data: companies } = await getCompaniesList(null, false);
+
+      const company = companies.map((cmp: any) => {
+        return {
+          label: cmp.name,
+          value: cmp.id,
+          selected: cmp.id === companyId,
+        };
+      });
+      debugger;
+
+      setClients(clients);
+
+      if (!!companyId) {
+        setCompanyOptions([...company]);
+        setSingleSelectCompany(company.find((cmp: any) => cmp.selected));
+      }
+
+      setCompanyOptions([...companyOptions, ...company]);
+    },
+    [companyOptions]
+  );
+
+  useEffect(() => {
+    if (!selectedCampaignId) {
+      formatSelectCompany();
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log(selectedCampaignId, singleSelectCompany, "@@@ company");
+    debugger;
+    if (!!selectedCampaignId && singleSelectCompany !== "") {
+      debugger;
+      const campaign = campaignsList.find(
+        (cmp: any) => cmp.id === selectedCampaignId
+      );
+      debugger;
+      const filterClient = clients.filter(
+        (clt: any) => clt.companyId === singleSelectCompany.value
+      );
+
+      const client = filterClient.map((clt: any, index) => {
+        console.log(index);
+        return {
+          label: clt.name,
+          value: clt.id,
+          selected: clt.id === campaign.client,
+        };
+      });
+      debugger;
+
+      console.log(client, "@@@ client");
+
+      setClientOptions(client);
+      setSingleSelectClient(client.find((clt) => clt.selected));
+    }
+  }, [campaignsList, clients, selectedCampaignId, singleSelectCompany]);
+
+  useEffect(() => {
+    if (singleSelectCompany !== "" && !selectedCampaignId) {
+      const filterClient = clients.filter(
+        (clt: any) => clt.companyId === singleSelectCompany.value
+      );
+
+      const client = filterClient.map((clt: any, index) => {
+        console.log(index);
+        return {
+          label: clt.name,
+          value: clt.id,
+          selected: index === 0 ? true : false,
+        };
+      });
+
+      setClientOptions(client);
+      setSingleSelectClient(client[0]);
+    }
+  }, [clients, selectedCampaignId, singleSelectCompany.value]);
+  //End
 
   const [err, setError] = useState("");
   const [data, setData] = useState({
@@ -70,13 +170,13 @@ export default function NewCampaign() {
     description: "",
     company: "",
     client: "",
-    maxClicks: "250",
+    maxClicks: 250,
     entryLink: "",
     endDate: new Date(),
     endPage: "",
     googleTagManager: "",
     facebookPixel: "",
-    useZapi: false,
+    useZapi: true,
     logo: "",
     instances: [],
     phoneMessage: "",
@@ -139,35 +239,39 @@ export default function NewCampaign() {
     });
   };
 
-  const setupInstancesOptions = () => {
-    auth.onAuthStateChanged(async (user) => {
-      let instancesListLocal = instancesList;
-      if (!instancesListLocal.length) {
-        const fetchInstancesResult = await getInstancesList();
+  const getInstances = async () => {
+    let instancesListLocal = instancesList;
+    if (!instancesListLocal.length) {
+      const fetchInstancesResult = await getInstancesList();
 
-        if (fetchInstancesResult?.data.length) {
-          instancesListLocal = fetchInstancesResult?.data;
-          dispatch(setInstancesList(fetchInstancesResult?.data));
-        }
+      if (fetchInstancesResult?.data.length) {
+        instancesListLocal = fetchInstancesResult?.data;
+        dispatch(setInstancesList(fetchInstancesResult?.data));
       }
+    }
+    return instancesListLocal;
+  };
 
-      const instancesMapped = instancesListLocal.map((instance: any) => {
-        return {
-          value: instance.id,
-          label: `${instance.description} - ${instance.api || "z-Api"} - ${
-            instance.phone || "NA"
-          }`,
-          data: instance,
-        };
-      });
-
-      if (instancesMapped.length) {
-        return setInstancesOptions(instancesMapped);
-      }
+  const setupInstancesOptions = async () => {
+    const instancesListLocal = await getInstances();
+    const instancesMapped = instancesListLocal.map((instance: any) => {
+      return {
+        value: instance.id,
+        label: `${instance.description} - ${instance.api || "z-Api"} - ${
+          instance.phone || "NA"
+        }`,
+        data: instance,
+      };
     });
+
+    if (instancesMapped.length) {
+      setInstancesOptions(instancesMapped);
+      return;
+    }
   };
 
   const setupEditCampaign = async () => {
+    debugger;
     let campaignsListLocal = campaignsList;
     if (!campaignsListLocal.length) {
       const fetchCampaignsResult = await getCampaignsList(false);
@@ -177,12 +281,28 @@ export default function NewCampaign() {
         dispatch(setCampaignsList(fetchCampaignsResult?.data));
       }
     }
+    debugger;
 
     const seletedCampaign = campaignsListLocal.find(
       (campaign: any) => campaign.id === selectedCampaignId
     );
+    debugger;
 
     if (seletedCampaign) {
+      const getAllInstance = await getInstances();
+      const newInstances = seletedCampaign.instances.map(
+        (instanceCampaign: any) => {
+          return getAllInstance.find((itc: any) => itc.id === instanceCampaign);
+        }
+      );
+
+      console.log(newInstances, "@@@ newInstances");
+      const instances = newInstances.map((itc: any) => ({
+        value: itc.id,
+        label: `${itc.description} - ${itc.api} - ${itc.phone}`,
+        data: { ...itc },
+      }));
+
       setData({
         // @ts-ignore
         id: seletedCampaign.id,
@@ -200,23 +320,35 @@ export default function NewCampaign() {
         facebookPixel: seletedCampaign.facebookPixel || "",
         useZapi: seletedCampaign.useZapi || false,
         logo: seletedCampaign.logo || "",
-        instances: seletedCampaign.instances || [],
+        instances: instances || [],
         phoneMessage: seletedCampaign.phoneMessage || "",
         wzJoinMsg: seletedCampaign.wzJoinMsg || "",
         wzLeaveMsg: seletedCampaign.wzLeaveMsg || "",
         projectlAlertNumber: seletedCampaign.projectlAlertNumber || "",
         webHookUrl: seletedCampaign.webHookUrl || "",
       });
+      formatSelectCompany(seletedCampaign.company || null);
     }
   };
 
   const saveCampaignData = () => {
     const { id: campaignId, ...restData } = data;
-
+    console.log(restData.instances);
     try {
+      const instanceValue = restData.instances.map((int: any) => {
+        return int.value;
+      });
+
+      const payload = {
+        ...restData,
+        client: singleSelectClient.value,
+        company: singleSelectCompany.value,
+        instances: instanceValue,
+      };
+
       campaignId
-        ? updateCampaign(restData, campaignId)
-        : createCampaign(restData);
+        ? updateCampaign(payload, campaignId)
+        : createCampaign(payload);
 
       setCreatedModalIsOpen(true);
     } catch (error) {
@@ -225,9 +357,13 @@ export default function NewCampaign() {
   };
 
   useEffect(() => {
-    setupCompaniesOptions();
-    setupInstancesOptions();
-    if (selectedCampaignId) setupEditCampaign();
+    if (selectedCampaignId) {
+      setupEditCampaign();
+      setupInstancesOptions();
+    } else {
+      setupCompaniesOptions();
+      setupInstancesOptions();
+    }
   }, []);
 
   return (
@@ -272,38 +408,37 @@ export default function NewCampaign() {
                 onChange={changeHandler}
               />
             </Form.Group>
-
             <Row>
               <Col lg={6}>
                 <Form.Group className="form-group">
-                  <Form.Label className="">Empresa</Form.Label>{" "}
-                  <Form.Control
-                    className="form-control"
-                    placeholder="Empresa"
-                    name="company"
-                    type="text"
-                    value={company}
-                    onChange={changeHandler}
-                    required
-                  />
+                  <div className="mb-4">
+                    <p className="mg-b-10">Empresa</p>
+                    <div className=" SlectBox">
+                      <Select
+                        options={companyOptions}
+                        onChange={(e: any) => {
+                          console.log(e.target.value);
+                          setSingleSelectCompany({ value: e.target.value });
+                        }}
+                      />
+                    </div>
+                  </div>
                 </Form.Group>
               </Col>
               <Col lg={6}>
-                <Form.Group className="form-group">
-                  <Form.Label className="">Cliente</Form.Label>{" "}
-                  <Form.Control
-                    className="form-control"
-                    placeholder="Cliente"
-                    name="client"
-                    type="text"
-                    value={client}
-                    onChange={changeHandler}
-                    required
-                  />
-                </Form.Group>
+                <div className="mb-4">
+                  <p className="mg-b-10">Cliente</p>
+                  <div className=" SlectBox">
+                    <Select
+                      options={clientOptions}
+                      onChange={(e: any) =>
+                        setSingleSelectClient({ value: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
               </Col>
             </Row>
-
             <Row>
               <Col lg={6}>
                 <Form.Group className="form-group">
@@ -317,7 +452,15 @@ export default function NewCampaign() {
                     name="maxClicks"
                     type="number"
                     value={maxClicks}
-                    onChange={changeHandler}
+                    onChange={(e) => {
+                      console.log(Number(e.target.value));
+                      changeHandler({
+                        target: {
+                          name: e.target.name,
+                          value: Number(e.target.value),
+                        },
+                      });
+                    }}
                     required
                   />
                 </Form.Group>
@@ -409,22 +552,24 @@ export default function NewCampaign() {
               </Col>
             </Row>
 
-            <Row>
-              <Col lg={6}>
-                <Form.Group className="form-group">
-                  <Form.Label htmlFor="formFile" className="form-label">
-                    Logomarca (Imagem JPG até 600x600)
-                  </Form.Label>
-                  <Form.Control
-                    className="form-control"
-                    type="file"
-                    id="formFile"
-                    name="logo"
-                    value={logo}
-                    onChange={changeHandler}
-                    required
-                  />
-                </Form.Group>
+            <Row style={{ height: 100 }}>
+               <Col lg={6}>
+                {data.useZapi && (
+                  <Form.Group className="form-group">
+                    <Form.Label htmlFor="formFile" className="form-label">
+                      Logomarca (Imagem JPG até 600x600)
+                    </Form.Label>
+                    <Form.Control
+                      className="form-control"
+                      type="file"
+                      id="formFile"
+                      name="logo"
+                      onChange={changeHandler}
+                      required
+                      accept=".jpg, .jpeg"
+                    />
+                  </Form.Group>
+                )}
               </Col>
               <Col lg={6}>
                 <Form className="ms-auto">
@@ -434,6 +579,7 @@ export default function NewCampaign() {
                     type="switch"
                     id="custom-switch"
                     name="useZapi"
+                    style={{ marginTop: 10 }}
                     onChange={(e) =>
                       setData({
                         ...data,
@@ -444,21 +590,21 @@ export default function NewCampaign() {
                 </Form>
               </Col>
             </Row>
-
             <Row>
               <Col lg={12}>
+                <Form.Label className=""> Instâncias da Campanha</Form.Label>{" "}
                 <Creatable
                   classNamePrefix="background"
                   // display="value"
                   options={instancesOptions}
                   value={instances}
-                  onChange={(value) =>
+                  onChange={(value: any) => {
                     setData({
                       ...data,
                       // @ts-ignore
                       instances: value,
-                    })
-                  }
+                    });
+                  }}
                   // labelledBy="Select"
                   isMulti
                 />
