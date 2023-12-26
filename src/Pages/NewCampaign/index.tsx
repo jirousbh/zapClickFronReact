@@ -553,7 +553,7 @@ export default function NewCampaign() {
             </Row>
 
             <Row style={{ height: 100 }}>
-               <Col lg={6}>
+              <Col lg={6}>
                 {data.useZapi && (
                   <Form.Group className="form-group">
                     <Form.Label htmlFor="formFile" className="form-label">

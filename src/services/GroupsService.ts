@@ -38,4 +38,15 @@ const createGroup = async (url: string, campaignId: number) => {
   return response;
 };
 
-export { getGroupsByCampaign, updateGroup, createGroup };
+const createMultipleGroups = async (urls: string, campaignId: string) => {
+  const response = await FirebaseService.callFirebaseFunction("importLinks", {
+    project: campaignId,
+    link: {
+      urls,
+    },
+  });
+
+  return response;
+};
+
+export { getGroupsByCampaign, updateGroup, createGroup, createMultipleGroups };

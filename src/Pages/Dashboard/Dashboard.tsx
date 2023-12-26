@@ -48,20 +48,13 @@ export default function Dashboard() {
   const [disabledStatus, setDisabledStatus] = useState(null);
 
   const openDisabledCampaignModal = (campaignId: string, active: string) => {
-    console.log({ project: campaignId, changes: { active } });
     setDisabledStatus({ campaignId, active });
     setDisabledCampaign(true);
   };
 
   const handleDisabledCampaign = async () => {
     try {
-      console.log(
-        disabledStatus,
-      );
-      await updateCampaign(
-        { active: false },
-        disabledStatus.campaignId
-      );
+      await updateCampaign({ active: !disabledStatus.active }, disabledStatus.campaignId);
       loadCampaigns();
     } catch (error) {
       console.log(error);
@@ -139,7 +132,15 @@ export default function Dashboard() {
       const campaignsUpdated = data.map((campaign) => {
         return {
           id: campaign.id,
-          name: <Link to="#">{campaign.name}</Link>,
+          name: (
+            // eslint-disable-next-line jsx-a11y/anchor-is-valid
+            <p
+              onClick={() => navigateTo("campaign-groups/", campaign.id)}
+              style={{ color: "#2c7be5", cursor: "pointer", fontSize: 15 }}
+            >
+              {campaign.name}
+            </p>
+          ),
           totalLinks: campaign.totalLinks,
           projClicks:
             campaign.totalClicks +
@@ -699,7 +700,9 @@ export default function Dashboard() {
               >
                 <h3>
                   Deseja{" "}
-                  <span>{!disabledStatus?.active ? "ativar" : "desativar"} </span>
+                  <span>
+                    {!disabledStatus?.active ? "ativar" : "desativar"}{" "}
+                  </span>
                   campanha
                 </h3>
                 <div

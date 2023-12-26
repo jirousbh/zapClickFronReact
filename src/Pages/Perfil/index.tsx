@@ -253,8 +253,8 @@ export default function Perfil() {
                   </Button>{" "}
                   <Button
                     variant=""
-                    aria-label="Close"
-                    className="btn ripple btn-danger pd-x-25"
+                    aria-label="Closes"
+                    className="btn ripple btn-danger pd-x-25s"
                     type="button"
                     onClick={() => setUserModal(false)}
                   >

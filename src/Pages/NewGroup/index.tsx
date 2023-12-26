@@ -22,8 +22,17 @@ import {
 } from "react-bootstrap";
 import { getCampaignsList } from "../../services/CampaignsService";
 import { setCampaignsList } from "../../redux/actions/campaign";
-import { createGroup, updateGroup } from "../../services/GroupsService";
+import {
+  createGroup,
+  createMultipleGroups,
+  updateGroup,
+} from "../../services/GroupsService";
 import Select from "../../components/Select";
+
+const TEXT_AREA_PLACEHOLDER = `Exemplo:
+https://chat.whatsapp.com/GwXUaxa1OMB8Uu7tDkD0GD
+https://chat.whatsapp.com/F9cYBXr9jkQ4J4Ovn4mOjD
+https://chat.whatsapp.com/C2QZSUmrT3MJM1aDmbXhM1`;
 
 export default function NewGroup() {
   let navigate = useNavigate();
@@ -35,7 +44,11 @@ export default function NewGroup() {
   const selectedGroup = useSelector(
     (state: any) => state.groupReducer.selectedGroup
   );
-  console.log(selectedGroup, "@@@ selectedGroup");
+  const registerMultipleGroups = useSelector(
+    (state: any) => state.groupReducer.registerMultipleGroups
+  );
+
+  console.log(registerMultipleGroups, "@@@ selectedGroup");
   const selectedCampaignId = useSelector(
     (state: any) => state.campaignReducer.selectedCampaignId
   );
@@ -91,9 +104,9 @@ export default function NewGroup() {
 
         if (selectedCampaign) onSelect(selectedCampaign);
       }
+      onSelect(campaignsMapped[0]);
+      setOptions(campaignsMapped);
     }
-
-    setOptions(campaignsMapped);
   };
 
   const setGroupForm = () => {
@@ -108,9 +121,14 @@ export default function NewGroup() {
 
   const saveGroupData = async () => {
     try {
-      selectedGroup
-        ? await updateGroup(url, selectedGroup?.id, campaignSelected.value)
-        : await createGroup(url, campaignSelected.value);
+      if (selectedGroup) {
+        await updateGroup(url, selectedGroup?.id, campaignSelected.value);
+      } else if (registerMultipleGroups) {
+        const urls = url.replace(/https:/g, "\\nhttps:").replace("\\n", "");
+        await createMultipleGroups(urls, campaignSelected.value);
+      } else {
+        await createGroup(url, campaignSelected.value);
+      }
 
       setCreatedModalIsOpen(true);
     } catch (error) {
@@ -163,16 +181,30 @@ export default function NewGroup() {
             <Row>
               <Col xl={10} lg={12} md={12} xs={12}>
                 <Form.Group className="form-group">
-                  <Form.Label className="">URL</Form.Label>{" "}
-                  <Form.Control
-                    className="form-control"
-                    placeholder="Ex: https://chat.whatsapp.com/B9zVoUON2LBAZRjuG0eQd"
-                    name="url"
-                    value={data.url}
-                    type="text"
-                    onChange={(e) => handleChangeValue("url", e.target.value)}
-                    required
-                  />
+                  <Form.Label className="">
+                    {registerMultipleGroups ? "LISTA DE LINKS" : "URL"}
+                  </Form.Label>{" "}
+                  {registerMultipleGroups ? (
+                    <Form.Control
+                      className="form-control"
+                      placeholder={TEXT_AREA_PLACEHOLDER}
+                      name="url"
+                      value={data.url}
+                      onChange={(e) => handleChangeValue("url", e.target.value)}
+                      required
+                      as="textarea"
+                    />
+                  ) : (
+                    <Form.Control
+                      className="form-control"
+                      placeholder="Ex: https://chat.whatsapp.com/B9zVoUON2LBAZRjuG0eQd"
+                      name="url"
+                      value={data.url}
+                      type="text"
+                      onChange={(e) => handleChangeValue("url", e.target.value)}
+                      required
+                    />
+                  )}
                 </Form.Group>
               </Col>
             </Row>

@@ -46,13 +46,21 @@ export default function Dashboard() {
   const [campaignOptions, setCampaignOptions] = useState<any>([]);
 
   let navigate = useNavigate();
-
+  /* 
   const routeChange = () => {
     if (!singleSelectCampaign) return;
 
     let path = `${process.env.PUBLIC_URL}/new-campaign/`;
 
-    dispatch(setSelectedCampaignId(singleSelectCampaign.id));
+    dispatch(setSelectedCampaignId(singleSelectCampaign.value));
+    console.log(singleSelectCampaign.value, "@@@ in group");
+    navigate(path);
+  }; */
+
+  const navigateTo = (navigateToPath: string) => {
+    let path = `${process.env.PUBLIC_URL}/${navigateToPath}`;
+
+    dispatch(setSelectedCampaignId(selectedCampaignId));
 
     navigate(path);
   };
@@ -71,15 +79,18 @@ export default function Dashboard() {
 
   const navigateToNewGroup = (
     isEdit: boolean = false,
-    seletedGroup: any = null
+    selectedGroup: any = null,
+    registerMultipleGroups: boolean = false
   ) => {
     let path = `${process.env.PUBLIC_URL}/new-group/`;
-
-    if (isEdit && seletedGroup) {
-      dispatch(setSelectedGroup(seletedGroup));
-      dispatch(setSelectedCampaignId(seletedGroup.projectId));
+    console.log(isEdit, selectedGroup);
+    if (isEdit && selectedGroup) {
+      dispatch(setSelectedGroup({ selectedGroup, registerMultipleGroups }));
+      dispatch(setSelectedCampaignId(selectedGroup.projectId));
     } else {
-      dispatch(setSelectedGroup(null));
+      dispatch(
+        setSelectedGroup({ selectedGroup: null, registerMultipleGroups })
+      );
       dispatch(setSelectedCampaignId(null));
     }
 
@@ -88,7 +99,7 @@ export default function Dashboard() {
 
   const setupGroups = async (campaign: any) => {
     const groupsResponse = await getGroupsByCampaign(campaign.value);
-
+    console.log(groupsResponse, "@@@ groupsResponse");
     if (groupsResponse?.data?.length) {
       const groupsList = groupsResponse?.data?.map((group: any) => {
         const urtToShow =
@@ -383,25 +394,25 @@ export default function Dashboard() {
             <Button
               variant=""
               className="d-flex align-items-center btn me-2 btn-primary mb-4"
+              onClick={() => navigateTo("new-campaign/")}
             >
               <i className="fa fa-edit tx-16 text-white"></i>
-              <div className="pb-0 mt-0 mg-l-10" onClick={() => routeChange()}>
-                Editar campanha
-              </div>
+              <span className="pb-0 mt-0 mg-l-10">Editar campanha</span>
             </Button>
             <Button
               variant=""
               className="d-flex align-items-center btn me-2 bg-green mb-4"
+              onClick={() => navigateTo("campaign-leads/")}
             >
               <i className="fa fa-magnet tx-16 text-white"></i>
-              <div className="pb-0 mt-0 mg-l-10">Ver leads</div>
+              <span className="pb-0 mt-0 mg-l-10">Ver leads</span>
             </Button>
             <Button
               variant=""
               className="d-flex align-items-center btn me-2 bg-green mb-4"
             >
               <i className="fa fa-link tx-16 text-white"></i>
-              <div className="pb-0 mt-0 mg-l-10">Ver links (Legado)</div>
+              <span className="pb-0 mt-0 mg-l-10">Ver links (Legado)</span>
             </Button>
           </Col>
         ) : null}
@@ -549,7 +560,7 @@ export default function Dashboard() {
             Cadastrar Grupo
           </Button>
           <Button
-            onClick={() => navigateToNewGroup()}
+            onClick={() => navigateToNewGroup(false, null, true)}
             variant=""
             className="btn me-2 btn-secondary mb-4"
           >
