@@ -1,8 +1,3 @@
-import React from "react";
-import { OverlayTrigger, Tooltip, Form } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import ReactApexChart from "react-apexcharts";
-
 export const GROUPS_COLUMNS: any = [
   {
     Header: "Número",

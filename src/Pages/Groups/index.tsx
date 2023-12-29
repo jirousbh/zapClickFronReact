@@ -46,21 +46,11 @@ export default function Dashboard() {
   const [campaignOptions, setCampaignOptions] = useState<any>([]);
 
   let navigate = useNavigate();
-  /* 
-  const routeChange = () => {
-    if (!singleSelectCampaign) return;
-
-    let path = `${process.env.PUBLIC_URL}/new-campaign/`;
-
-    dispatch(setSelectedCampaignId(singleSelectCampaign.value));
-    console.log(singleSelectCampaign.value, "@@@ in group");
-    navigate(path);
-  }; */
 
   const navigateTo = (navigateToPath: string) => {
     let path = `${process.env.PUBLIC_URL}/${navigateToPath}`;
-
-    dispatch(setSelectedCampaignId(selectedCampaignId));
+    console.log(singleSelectCampaign.value, '@@@ navigateTo')
+    dispatch(setSelectedCampaignId(singleSelectCampaign.value));
 
     navigate(path);
   };

@@ -20,7 +20,7 @@ const cacheInvalidation = [
       "importLinks",
       "createCommunity",
     ],
-    clean: ["fetchLinksByProject", "fetchProjects"],
+    clean: ["fetchLinksByProject", "fetchProjects", "fetchLeadSumaryByGroups"],
   },
   {
     onCall: ["createCompany", "editCompany"],

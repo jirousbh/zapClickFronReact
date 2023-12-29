@@ -1,32 +1,32 @@
 export const LEADS_COLUMNS: any = [
   {
     Header: "Data",
-    accessor: "url",
+    accessor: "daybr",
     className: "text-center ",
   },
   {
     Header: "Grupo",
-    accessor: "source",
+    accessor: "linkId",
     className: "text-center ",
   },
   {
     Header: "Total de Eventos",
-    accessor: "medium",
+    accessor: "total",
     className: "text-center ",
   },
   {
     Header: "Atual",
-    accessor: "utmCampaign",
+    accessor: "current",
     className: "text-center ",
   },
   {
     Header: "Entradas",
-    accessor: "utmTerm",
+    accessor: "entering",
     className: "text-center ",
   },
   {
     Header: "Saídas",
-    accessor: "utmContent",
+    accessor: "leaving",
     className: "text-center ",
   },
 ];

@@ -62,9 +62,9 @@ const updateCampaign = async (editedCampaignData: any, campaignId: any) => {
   return response;
 };
 
-const getLeadsTableByProjectId = async (projectId: any) => {
+const getLeadsSumaryByGroups = async (projectId: any) => {
   const response = await FirebaseService.callFirebaseFunction(
-    "fetchLeadsTableByProjectId",
+    "fetchLeadSumaryByGroups",
     {
       projectId,
     }
@@ -77,5 +77,5 @@ export {
   getCampaignsList,
   createCampaign,
   updateCampaign,
-  getLeadsTableByProjectId,
+  getLeadsSumaryByGroups,
 };
