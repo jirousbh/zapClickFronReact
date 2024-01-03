@@ -1,20 +1,11 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
-import ReactApexChart from "react-apexcharts";
 import ReactDatePicker from "react-datepicker";
 import Creatable from "react-select/creatable";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  useTable,
-  useSortBy,
-  useGlobalFilter,
-  usePagination,
-} from "react-table";
-import {
-  Breadcrumb,
   Col,
   Row,
-  Card,
   Button,
   Form,
   Alert,
@@ -23,15 +14,15 @@ import {
 } from "react-bootstrap";
 
 import { auth } from "../../Firebase/firebase";
-
-import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
-
 import { setCompaniesList } from "../../redux/actions/companies";
 import { setInstancesList } from "../../redux/actions/instances";
 
 import { getCompaniesList } from "../../services/CompaniesService";
 import { getInstancesList } from "../../services/InstancesService";
-import { setCampaignsList } from "../../redux/actions/campaign";
+import {
+  setCampaignsList,
+  setSelectedCampaignId,
+} from "../../redux/actions/campaign";
 import {
   createCampaign,
   getCampaignsList,
@@ -40,6 +31,8 @@ import {
 import { toDateTime } from "../../utils/dates";
 import { getClient } from "../../services/ClientsService";
 import Select from "../../components/Select";
+import { useNavigate } from "react-router-dom";
+import SuccessIcon from "../../assets/img/success.svg";
 
 const INITIAL_STATE = {
   company: { label: "Selecione uma Empresa", value: "", selected: true },
@@ -78,6 +71,15 @@ export default function NewCampaign() {
     INITIAL_STATE.client,
   ]);
   const [clients, setClients] = useState([]);
+  const navigate = useNavigate();
+
+  const navigateToGroups = () => {
+    const path = `${process.env.PUBLIC_URL}/campaign-groups`;
+    dispatch(setSelectedCampaignId(singleSelectCompany.value));
+
+    navigate(path);
+    setCreatedModalIsOpen(false);
+  };
 
   const formatSelectCompany = useCallback(
     async (companyId = null) => {
@@ -723,7 +725,7 @@ export default function NewCampaign() {
           <Button
             variant=""
             className="btn btn-close"
-            onClick={() => setCreatedModalIsOpen(false)}
+            onClick={() => navigateToGroups()}
           >
             x
           </Button>
@@ -731,9 +733,13 @@ export default function NewCampaign() {
         <Modal.Body>
           <div className="tx-center">
             {" "}
-            <i className="icon icon ion-ios-close-circle-outline tx-100 tx-success lh-1 mg-t-20 d-inline-block"></i>{" "}
-            <h4 className="tx-success mg-b-20">
-              {id ? "Atualizar" : "Cadastrar"} Campanha
+            <img
+              src={SuccessIcon}
+              className="mx-auto d-block mg-b-20"
+              alt="InfoImage"
+            />
+            <h4 className="mg-b-20">
+              {id ? "Alterar" : "Cadastrar"} Campanha
             </h4>{" "}
             <p className="mg-b-20 mg-x-20">
               Campanha {id ? "atualizada" : "cadastrada"} com sucesso!
@@ -741,11 +747,11 @@ export default function NewCampaign() {
             <Button
               variant=""
               aria-label="Close"
-              className="btn ripple btn-success pd-x-25"
+              className="btn ripple btn-success pd-x-25 mg-b-20"
               type="button"
-              onClick={() => setCreatedModalIsOpen(false)}
+              onClick={() => navigateToGroups()}
             >
-              Fechar
+              Detalhes da Campanha
             </Button>{" "}
           </div>
         </Modal.Body>

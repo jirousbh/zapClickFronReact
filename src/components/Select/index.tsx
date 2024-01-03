@@ -1,7 +1,5 @@
 import React from "react";
 
-// import { Container } from './styles';
-
 interface SelectProps {
   options: Array<any>;
   onChange: (e: any) => void;

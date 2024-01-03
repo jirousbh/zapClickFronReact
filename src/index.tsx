@@ -20,6 +20,7 @@ const Dashboard = React.lazy(() => import("./Pages/Dashboard/Dashboard"));
 const Groups = React.lazy(() => import("./Pages/Groups"));
 const Shorteners = React.lazy(() => import("./Pages/Shorteners"));
 const CampaignLeads = React.lazy(() => import("./Pages/CampaignLeads"));
+const ImportLeads = React.lazy(() => import("./Pages/CampaignLeads/ImportLeads"));
 const Companies = React.lazy(() => import("./Pages/Companies"));
 const Clients = React.lazy(() => import("./Pages/Clients"));
 const Instances = React.lazy(() => import("./Pages/Instances"));
@@ -391,6 +392,10 @@ root.render(
               <Route
                 path={`${process.env.PUBLIC_URL}/campaign-leads`}
                 element={<CampaignLeads />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/import-leads`}
+                element={<ImportLeads />}
               />
               <Route
                 path={`${process.env.PUBLIC_URL}/companies`}

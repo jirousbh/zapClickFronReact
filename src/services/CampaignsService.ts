@@ -73,9 +73,23 @@ const getLeadsSumaryByGroups = async (projectId: any) => {
   return response;
 };
 
+const importLeads = async (projectId: any, files: any) => {
+  const formData = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    formData.append("files", files[i]);
+  }
+  const response = await FirebaseService.callFirebaseFunction(
+    "importLeadReport",
+    { selectLinkProjectId: projectId, formData }
+  );
+
+  return response;
+};
+
 export {
   getCampaignsList,
   createCampaign,
   updateCampaign,
   getLeadsSumaryByGroups,
+  importLeads,
 };
