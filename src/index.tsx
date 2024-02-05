@@ -6,6 +6,7 @@ import Auth from "./Authentication/auth";
 import "./index.scss";
 import Loader from "./shade/Loaders/Loaders";
 import Perfil from "./Pages/Perfil";
+import { ToastContainer } from "react-toastify";
 
 const App = React.lazy(() => import("../src/shade/layouts/App"));
 const Switcherapp = React.lazy(
@@ -943,6 +944,7 @@ root.render(
         </Routes>
       </React.Suspense>
     </BrowserRouter>
+    <ToastContainer />
   </React.Fragment>
 );
 

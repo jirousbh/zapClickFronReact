@@ -19,7 +19,7 @@ const cacheInvalidation = [
       "deleteLink",
       "importLinks",
       "createCommunity",
-      "importLeadReport"
+      "importLeadReport",
     ],
     clean: ["fetchLinksByProject", "fetchProjects", "fetchLeadSumaryByGroups"],
   },

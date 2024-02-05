@@ -292,15 +292,17 @@ export default function NewCampaign() {
 
     if (seletedCampaign) {
       const getAllInstance = await getInstances();
+      console.log(getAllInstance, '@@@ getAllInstance')
+      console.log(seletedCampaign, '@@@ seletedCampaign')
       const newInstances = seletedCampaign.instances.map(
         (instanceCampaign: any) => {
           return getAllInstance.find((itc: any) => itc.id === instanceCampaign);
         }
-      );
+      ).filter((instance: any) => instance !== undefined)
 
       console.log(newInstances, "@@@ newInstances");
       const instances = newInstances.map((itc: any) => ({
-        value: itc.id,
+        value: itc?.id || '',
         label: `${itc.description} - ${itc.api} - ${itc.phone}`,
         data: { ...itc },
       }));

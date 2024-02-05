@@ -9,6 +9,10 @@ import {
   Button,
   OverlayTrigger,
   Tooltip,
+  ButtonGroup,
+  Dropdown,
+  Modal,
+  ProgressBar,
 } from "react-bootstrap";
 import { GROUPS_COLUMNS } from "./GroupsTableConfig";
 import {
@@ -22,21 +26,48 @@ import { pad } from "../../utils/number";
 import { setSelectedGroup } from "../../redux/actions/groups";
 import Select from "../../components/Select";
 import Table from "../../components/Table";
+import { buttons } from "./actions";
+import Factory from "./Components/Form";
+import { queueLinkId, randomIntFromInterval, timeOut } from "../../utils/queueRequest";
+
+const INITIAL_STATE = {
+  linkIdFirst: "1",
+  linkIdLast: "",
+  intervalFirst: "5",
+  intervalLast: "5",
+  instanceId: "",
+  projectId: "",
+  adminNumbers: "",
+  extraAdmimNumber: "",
+  groupName: "asd",
+  image: "",
+};
 
 export default function Dashboard() {
   const dispatch = useDispatch();
-
   const campaignsList = useSelector(
     (state: any) => state.campaignReducer.campaignsList
   );
   const selectedCampaignId = useSelector(
     (state: any) => state.campaignReducer.selectedCampaignId
   );
-
   const [campaignGroups, setCampaignGroups] = useState<any>([]);
-
   const [singleSelectCampaign, setSingleSelectCampaign] = useState<any>(null);
   const [campaignOptions, setCampaignOptions] = useState<any>([]);
+  const [actionSelected, setActionSelected] = useState<any>(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [loading, setLoading] = useState(0);
+  const [infoProgress, setInfoProgress] = useState<any>(null)
+
+  const [formValues, setFormValues] = useState(INITIAL_STATE);
+
+  const handleChangeValue = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormValues({
+      ...formValues,
+      projectId: singleSelectCampaign.value,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   let navigate = useNavigate();
 
@@ -70,7 +101,7 @@ export default function Dashboard() {
   };
 
   const setupGroups = async (campaign: any) => {
-    const groupsResponse = await getGroupsByCampaign(campaign.value);
+    const groupsResponse: any = await getGroupsByCampaign(campaign.value);
     if (groupsResponse?.data?.length) {
       const groupsList = groupsResponse?.data?.map((group: any) => {
         const urtToShow =
@@ -159,7 +190,6 @@ export default function Dashboard() {
                   <i className="fa fa-edit"></i>
                 </Button>
               </OverlayTrigger>
-
               {group.clickCount && group.id === groupsResponse?.data?.length ? (
                 <OverlayTrigger
                   placement="top"
@@ -236,7 +266,7 @@ export default function Dashboard() {
         crossOrigin: "anonymous",
       },
     });
-
+    console.log(singleSelectCampaign?.data?.entryLink, '@@@ qrCode')
     qrCodeStyling.append(qrCodeRef.current);
   };
 
@@ -293,6 +323,60 @@ export default function Dashboard() {
     setQrCode();
   }, []);
 
+  const handleActiveButton = (id: string) => {
+    /* const newButtons = buttonsDropdown.map((bt) => ({
+      ...bt,
+      active: bt.id === id,
+    })); */
+
+    const selectButton = buttons.find((bt) => bt.id === id);
+
+    const isSelect = selectButton?.inputs?.some(
+      (stb) => stb.label === "Instância"
+    );
+    
+    const selectButtonParse = isSelect
+      ? {
+          ...selectButton,
+          instances: singleSelectCampaign.data.instances || [],
+        }
+      : { ...selectButton };
+    setActionSelected(selectButtonParse);
+    setLoading(0)
+    setOpenModal(true);
+  };
+
+  const requestWithQueue = async (bt: any) => {
+    const interval = randomIntFromInterval(
+      Number(formValues.intervalFirst),
+      Number(formValues.intervalLast)
+    );
+
+    const queue = queueLinkId(formValues.linkIdFirst, formValues.linkIdLast);
+    console.log({queue, interval, form: formValues.intervalFirst, form1: formValues.intervalLast, form2: formValues.linkIdFirst, form4: formValues.linkIdLast})
+    let index = 1;
+    for (let linkId of queue) {
+      const progress = Math.floor((index / (queue.length)) * 100)
+      index++;
+      await timeOut(interval).then(async () => {
+      await bt.action({...formValues, linkId})
+      setInfoProgress({linkId})
+      })
+      setLoading(progress)
+    }
+  }
+
+  const handleClick = async (bt: any) => {
+
+    if(!!formValues.linkIdLast) {
+      return requestWithQueue(bt)
+    }
+    return bt.action(formValues)
+  }
+
+  useEffect(() => {
+    console.log(loading, '@@@ loading')
+  }, [loading])
   return (
     <React.Fragment>
       <div className="breadcrumb-header justify-content-between">
@@ -300,7 +384,6 @@ export default function Dashboard() {
           <h1 className="main-content-title mg-b-0 mg-b-lg-1">Grupos</h1>
         </div>
       </div>
-
       <Row>
         <Col xl={6} lg={12} md={12} xs={12}>
           <div>
@@ -315,7 +398,6 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-
             <h6 className="mb-4 tx-gray-500">
               Números gerais e grupos da sua campanha
             </h6>
@@ -354,6 +436,128 @@ export default function Dashboard() {
             </Button>
           </Col>
         ) : null}
+        <div className="example">
+          <ButtonGroup className="ms-2 mt-2 mb-2">
+            <Dropdown>
+              <Dropdown.Toggle
+                variant=""
+                aria-expanded="false"
+                aria-haspopup="true"
+                className="btn ripple btn-primary"
+                data-bs-toggle="dropdown"
+                id="dropdownMenuButton"
+                type="button"
+              >
+                Grupos
+              </Dropdown.Toggle>
+              <Dropdown.Menu
+                className="dropdown-menu tx-13"
+                style={{ margin: "0px" }}
+              >
+                {buttons
+                  .filter((bt) => bt.type === "groups")
+                  .map((bt) => (
+                    <Dropdown.Item
+                      active={bt.active}
+                      onClick={() => handleActiveButton(bt.id)}
+                    >
+                      {bt.name}
+                    </Dropdown.Item>
+                  ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </ButtonGroup>
+          <ButtonGroup className="ms-2 mt-2 mb-2">
+            <Dropdown>
+              <Dropdown.Toggle
+                variant=""
+                aria-expanded="false"
+                aria-haspopup="true"
+                className="btn ripple btn-primary"
+                data-bs-toggle="dropdown"
+                id="dropdownMenuButton"
+                type="button"
+              >
+                Comunidade
+              </Dropdown.Toggle>
+              <Dropdown.Menu
+                className="dropdown-menu tx-13"
+                style={{ margin: "0px" }}
+              >
+                {buttons
+                  .filter((bt) => bt.type === "communities")
+                  .map((bt) => (
+                    <Dropdown.Item
+                      active={bt.active}
+                      onClick={() => handleActiveButton(bt.id)}
+                    >
+                      {bt.name}
+                    </Dropdown.Item>
+                  ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </ButtonGroup>
+          <ButtonGroup className="ms-2 mt-2 mb-2">
+            <Dropdown>
+              <Dropdown.Toggle
+                variant=""
+                aria-expanded="false"
+                aria-haspopup="true"
+                className="btn ripple btn-primary"
+                data-bs-toggle="dropdown"
+                id="dropdownMenuButton"
+                type="button"
+              >
+                Envios
+              </Dropdown.Toggle>
+              <Dropdown.Menu
+                className="dropdown-menu tx-13"
+                style={{ margin: "0px" }}
+              >
+                {buttons
+                  .filter((bt) => bt.type === "sends")
+                  .map((bt) => (
+                    <Dropdown.Item
+                      active={bt.active}
+                      onClick={() => handleActiveButton(bt.id)}
+                    >
+                      {bt.name}
+                    </Dropdown.Item>
+                  ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </ButtonGroup>
+          <ButtonGroup className="ms-2 mt-2 mb-2">
+            <Dropdown>
+              <Dropdown.Toggle
+                variant=""
+                aria-expanded="false"
+                aria-haspopup="true"
+                className="btn ripple btn-primary"
+                data-bs-toggle="dropdown"
+                id="dropdownMenuButton"
+                type="button"
+              >
+                Leads
+              </Dropdown.Toggle>
+              <Dropdown.Menu
+                className="dropdown-menu tx-13"
+                style={{ margin: "0px" }}
+              >
+                {buttons
+                  .filter((bt) => bt.type === "leads")
+                  .map((bt) => (
+                    <Dropdown.Item
+                      active={bt.active}
+                      onClick={() => handleActiveButton(bt.id)}
+                    >
+                      {bt.name}
+                    </Dropdown.Item>
+                  ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </ButtonGroup>
+        </div>
       </Row>
       {singleSelectCampaign ? (
         <Row>
@@ -506,11 +710,65 @@ export default function Dashboard() {
           </Button>
         </Col>
       </Row>
+      <button onClick={() => setOpenModal(true)}></button>
       <Table
         title="Grupos dessa campanha"
         columns={GROUPS_COLUMNS}
         data={campaignGroups}
       />
+      <Modal show={openModal}>
+        <Modal.Header>
+          <Modal.Title>
+            {actionSelected?.title || actionSelected?.name}
+          </Modal.Title>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={() => setOpenModal(false)}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="">
+            {actionSelected?.inputs?.map((ipt: any, index: any) => {
+              const props = {
+                ...ipt,
+                instances: actionSelected?.instances,
+                handleChangeValue,
+              };
+              return <Factory {...props} key={index} />;
+            })}
+          </div>
+          <div style={{display: 'flex', flexDirection: 'column', marginTop: 10, marginBottom: 16}}>
+          {loading !== 0 && 
+          <div style={{margin: 10}}>
+           <h5>Renomear Grupos</h5>
+           <p>Aguarde... Não fecha esse Modal!!</p>
+           <p>Ultima Ação: Mensagem ao grupo {infoProgress && infoProgress.linkId} foi executada com sucesso</p>
+           <p>Próxima Ação: Próxima Mensagem será enviada em: 5</p>
+          <ProgressBar now={loading} label={`${loading}%`}/>
+          </div>
+          }
+          </div>
+          <div>
+            {actionSelected?.buttons?.map((bt: any) => (
+              <Button
+                variant=""
+                aria-label="Confirm"
+                className="btn ripple btn-primary pd-x-25"
+                type="button"
+                onClick={() => handleClick(bt)}
+                style={{ marginRight: 10 }}
+                disabled={loading !== 0 && loading !== 100}
+              >
+                {bt.label}
+              </Button>
+            ))}
+          </div>
+          
+        </Modal.Body>
+      </Modal>
     </React.Fragment>
   );
 }

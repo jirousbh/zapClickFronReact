@@ -4,12 +4,14 @@ interface SelectProps {
   options: Array<any>;
   onChange: (e: any) => void;
   disabled?: boolean;
+  name?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
   options,
   onChange,
   disabled = false,
+  name = "",
 }) => {
   return (
     <select
@@ -22,6 +24,7 @@ const Select: React.FC<SelectProps> = ({
       }}
       onChange={onChange}
       disabled={disabled}
+      name={name}
     >
       {options.map((option: any) => (
         <option
