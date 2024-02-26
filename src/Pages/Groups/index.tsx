@@ -13,6 +13,8 @@ import {
   Dropdown,
   Modal,
   ProgressBar,
+  Form,
+  Toast,
 } from "react-bootstrap";
 import { GROUPS_COLUMNS } from "./GroupsTableConfig";
 import {
@@ -26,13 +28,19 @@ import { pad } from "../../utils/number";
 import { setSelectedGroup } from "../../redux/actions/groups";
 import Select from "../../components/Select";
 import Table from "../../components/Table";
-import { buttons } from "./actions";
 import Factory from "./Components/Form";
-import { queueLinkId, randomIntFromInterval, timeOut } from "../../utils/queueRequest";
+import {
+  queueLinkId,
+  randomIntFromInterval,
+  timeOut,
+} from "../../utils/queueRequest";
+import { buttons } from "./actions";
+import { scheduleAddAction } from "../../services/Whatsapp/Common";
+import { toast } from "react-toastify";
 
 const INITIAL_STATE = {
   linkIdFirst: "1",
-  linkIdLast: "",
+  linkIdLast: "1",
   intervalFirst: "5",
   intervalLast: "5",
   instanceId: "",
@@ -40,7 +48,13 @@ const INITIAL_STATE = {
   adminNumbers: "",
   extraAdmimNumber: "",
   groupName: "asd",
-  image: "",
+  file: "",
+  btnMessage: "",
+  btnOptions: [],
+  pollMessage: "",
+  pollOptions: [],
+  name: "",
+  startTime: "",
 };
 
 export default function Dashboard() {
@@ -56,10 +70,14 @@ export default function Dashboard() {
   const [campaignOptions, setCampaignOptions] = useState<any>([]);
   const [actionSelected, setActionSelected] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
-  const [loading, setLoading] = useState(0);
-  const [infoProgress, setInfoProgress] = useState<any>(null)
-
+  const [progress, setProgress] = useState(0);
+  const [infoProgress, setInfoProgress] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [formValues, setFormValues] = useState(INITIAL_STATE);
+  const [seconds, setSeconds] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [show, setShow] = useState(false);
+  const [success, setSuccess] = useState<any>([]);
 
   const handleChangeValue = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormValues({
@@ -67,6 +85,23 @@ export default function Dashboard() {
       projectId: singleSelectCampaign.value,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleChangeFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!(e.target && e.target.files && e.target.files[0])) return;
+
+    const reader = new FileReader();
+
+    reader.readAsDataURL(e.target.files[0]);
+
+    reader.onload = () => {
+      const base64String = reader.result;
+
+      setFormValues({
+        ...formValues,
+        [e.target.name]: base64String,
+      });
+    };
   };
 
   let navigate = useNavigate();
@@ -266,7 +301,7 @@ export default function Dashboard() {
         crossOrigin: "anonymous",
       },
     });
-    console.log(singleSelectCampaign?.data?.entryLink, '@@@ qrCode')
+    console.log(singleSelectCampaign?.data?.entryLink, "@@@ qrCode");
     qrCodeStyling.append(qrCodeRef.current);
   };
 
@@ -334,7 +369,7 @@ export default function Dashboard() {
     const isSelect = selectButton?.inputs?.some(
       (stb) => stb.label === "Instância"
     );
-    
+
     const selectButtonParse = isSelect
       ? {
           ...selectButton,
@@ -342,41 +377,114 @@ export default function Dashboard() {
         }
       : { ...selectButton };
     setActionSelected(selectButtonParse);
-    setLoading(0)
+    setProgress(0);
     setOpenModal(true);
   };
 
+  useEffect(() => {
+    let interval: any;
+
+    if (isActive) {
+      interval = setInterval(() => {
+        setSeconds((seconds) => seconds - 1);
+      }, 1000);
+    } else if (!isActive && seconds !== 0) {
+      clearInterval(interval);
+    }
+
+    return () => clearInterval(interval);
+  }, [isActive, seconds]);
+
+  function toggleTimer() {
+    setIsActive(true);
+  }
+
+  function resetTimer() {
+    setSeconds(0);
+    setIsActive(false);
+  }
+
   const requestWithQueue = async (bt: any) => {
+    setLoading(true);
+    setShow(true);
     const interval = randomIntFromInterval(
       Number(formValues.intervalFirst),
       Number(formValues.intervalLast)
     );
-
     const queue = queueLinkId(formValues.linkIdFirst, formValues.linkIdLast);
-    console.log({queue, interval, form: formValues.intervalFirst, form1: formValues.intervalLast, form2: formValues.linkIdFirst, form4: formValues.linkIdLast})
+    console.log({
+      queue,
+      interval,
+      form: formValues.intervalFirst,
+      form1: formValues.intervalLast,
+      form2: formValues.linkIdFirst,
+      form4: formValues.linkIdLast,
+    });
     let index = 1;
     for (let linkId of queue) {
-      const progress = Math.floor((index / (queue.length)) * 100)
+      setInfoProgress({ linkId });
+      const progressCount = Math.floor((index / queue.length) * 100);
+      setSeconds(interval / 1000);
       index++;
-      await timeOut(interval).then(async () => {
-      await bt.action({...formValues, linkId})
-      setInfoProgress({linkId})
-      })
-      setLoading(progress)
+      toggleTimer();
+      try {
+        await timeOut(interval).then(async () => {
+          await bt.action({
+            ...formValues,
+            linkId,
+            project: { name: singleSelectCampaign.label },
+          });
+        });
+
+        setProgress(progressCount);
+        setSuccess((prv: any) => [...prv, { linkId, isSuccess: true }]);
+        resetTimer();
+      } catch (error) {
+        setProgress(progressCount);
+        setSuccess((prv: any) => [...prv, { linkId, isSuccess: false }]);
+        resetTimer();
+      }
     }
+    setLoading(false);
+  };
+
+  const handleClick = (bt: any) => {
+    if (!!formValues.linkIdLast) {
+      return requestWithQueue(bt);
+    }
+  };
+
+  const [openModalSchedule, setOpenModalSchedule] = useState(false);
+  const handleOpenModalSchedule = () => {
+    setOpenModal(false);
+    setOpenModalSchedule(true);
+  };
+
+  const handleCloseModalSchedule = () => {
+    setOpenModal(true);
+    setOpenModalSchedule(false);
+  };
+
+  const closeModal = () => {
+    setOpenModal(false);
+    setShow(false);
+    setSuccess([]);
+    setInfoProgress(null);
   }
 
-  const handleClick = async (bt: any) => {
-
-    if(!!formValues.linkIdLast) {
-      return requestWithQueue(bt)
+  const requestScheduleJob = async () => {
+    try { //TODO: colocar toast
+      const schedule = await scheduleAddAction({...formValues, sendFunction: actionSelected.sendFunction});
+      console.log(schedule.data.message);
+      setOpenModalSchedule(false)
+      closeModal()
+      toast(schedule.data.message)
+    } catch (error) {
+      handleCloseModalSchedule()
+      toast("Não foi possível criar o Agendamento, tente novamente!")
     }
-    return bt.action(formValues)
-  }
+  };
 
-  useEffect(() => {
-    console.log(loading, '@@@ loading')
-  }, [loading])
   return (
     <React.Fragment>
       <div className="breadcrumb-header justify-content-between">
@@ -436,8 +544,8 @@ export default function Dashboard() {
             </Button>
           </Col>
         ) : null}
-        <div className="example">
-          <ButtonGroup className="ms-2 mt-2 mb-2">
+        <div style={{marginBottom: 20}}>
+          <ButtonGroup>
             <Dropdown>
               <Dropdown.Toggle
                 variant=""
@@ -473,7 +581,7 @@ export default function Dashboard() {
                 variant=""
                 aria-expanded="false"
                 aria-haspopup="true"
-                className="btn ripple btn-primary"
+                className="btn ripple btn-secondary"
                 data-bs-toggle="dropdown"
                 id="dropdownMenuButton"
                 type="button"
@@ -503,7 +611,7 @@ export default function Dashboard() {
                 variant=""
                 aria-expanded="false"
                 aria-haspopup="true"
-                className="btn ripple btn-primary"
+                className="btn ripple btn-danger"
                 data-bs-toggle="dropdown"
                 id="dropdownMenuButton"
                 type="button"
@@ -710,7 +818,6 @@ export default function Dashboard() {
           </Button>
         </Col>
       </Row>
-      <button onClick={() => setOpenModal(true)}></button>
       <Table
         title="Grupos dessa campanha"
         columns={GROUPS_COLUMNS}
@@ -724,7 +831,8 @@ export default function Dashboard() {
           <Button
             variant=""
             className="btn btn-close"
-            onClick={() => setOpenModal(false)}
+            onClick={closeModal}
+            disabled={loading}
           >
             x
           </Button>
@@ -736,37 +844,197 @@ export default function Dashboard() {
                 ...ipt,
                 instances: actionSelected?.instances,
                 handleChangeValue,
+                handleChangeFile,
+                formValues,
               };
               return <Factory {...props} key={index} />;
             })}
           </div>
-          <div style={{display: 'flex', flexDirection: 'column', marginTop: 10, marginBottom: 16}}>
-          {loading !== 0 && 
-          <div style={{margin: 10}}>
-           <h5>Renomear Grupos</h5>
-           <p>Aguarde... Não fecha esse Modal!!</p>
-           <p>Ultima Ação: Mensagem ao grupo {infoProgress && infoProgress.linkId} foi executada com sucesso</p>
-           <p>Próxima Ação: Próxima Mensagem será enviada em: 5</p>
-          <ProgressBar now={loading} label={`${loading}%`}/>
-          </div>
-          }
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              marginTop: 10,
+              marginBottom: 16,
+            }}
+          >
+            {show && (
+              <div
+                style={{ background: "#f3f3f8", padding: 10, borderRadius: 10 }}
+              >
+                {infoProgress && (
+                  <p>
+                    Requisição do Grupo {infoProgress.linkId} será executada em:{" "}
+                    {seconds} segundos.
+                  </p>
+                )}
+                <ProgressBar
+                  now={progress}
+                  label={`${progress}%`}
+                  animated
+                  style={{ background: "#FFF" }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    overflow: "auto",
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    marginTop: 10,
+                  }}
+                >
+                  {success.map((sc: any, index: number) => {
+                    const styled = sc.isSuccess
+                      ? {
+                          backgroundColor: "#00d97e",
+                          padding: 5,
+                          borderRadius: 5,
+                          marginRight: 10,
+                          marginBotom: 10,
+                          marginTop: 10,
+                          marginBottom: 10,
+                        }
+                      : {
+                          backgroundColor: "#e63757",
+                          padding: 2,
+                          borderRadius: 5,
+                          marginRight: 5,
+                          marginBotom: 5,
+                          marginTop: 10,
+                          marginBottom: 10,
+                        };
+
+                    return (
+                      <div key={`@@Key-${index}`} style={styled}>
+                        <p
+                          style={{
+                            color: "#FFF",
+                            fontSize: 9,
+                            fontWeight: "bolder",
+                          }}
+                        >
+                          {sc.isSuccess ? "Sucesso - Grupo" : "Erro - Grupo"}{" "}
+                          {sc.linkId}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div />
+              </div>
+            )}
           </div>
           <div>
-            {actionSelected?.buttons?.map((bt: any) => (
-              <Button
-                variant=""
-                aria-label="Confirm"
-                className="btn ripple btn-primary pd-x-25"
-                type="button"
-                onClick={() => handleClick(bt)}
-                style={{ marginRight: 10 }}
-                disabled={loading !== 0 && loading !== 100}
-              >
-                {bt.label}
-              </Button>
-            ))}
+            {actionSelected?.buttons?.map((bt: any, index: number) => {              
+              const styled =
+                index === 0
+                  ? "btn ripple btn-primary pd-x-25"
+                  : "btn ripple btn-secondary pd-x-25";
+              return (
+                <Button
+                  variant=""
+                  aria-label="Confirm"
+                  className={styled}
+                  type="button"
+                  onClick={() => {
+                    if (index === 0) {
+                      handleClick(bt);
+                    } else {
+                      handleOpenModalSchedule();
+                    }
+                  }}
+                  style={{ marginRight: 10 }}
+                  disabled={loading}
+                >
+                  {bt.label}
+                </Button>
+              );
+            })}
           </div>
-          
+        </Modal.Body>
+      </Modal>
+      <Modal show={openModalSchedule}>
+        <Modal.Header>
+          <Modal.Title>Agendamento</Modal.Title>
+          <Button
+            variant=""
+            className="btn btn-close"
+            onClick={handleCloseModalSchedule}
+          >
+            x
+          </Button>
+        </Modal.Header>
+        <Modal.Body>
+          <Row className="mb-2">
+            <Col lg={12}>
+              <Form.Group className="form-group">
+                <Form.Label className="">Nome</Form.Label>{" "}
+                <Form.Control
+                  className="form-control"
+                  placeholder="Nome do Agendamento"
+                  type="text"
+                  onChange={handleChangeValue}
+                  name="name"
+                  required
+                />
+              </Form.Group>
+            </Col>
+            <Col lg={12}>
+              <Form.Group className="form-group">
+                <Form.Label className="">Data/Hora de Envio</Form.Label>{" "}
+                <Form.Control
+                  className="form-control"
+                  type="datetime-local"
+                  name="startTime"
+                  onChange={handleChangeValue}
+                  required
+                />
+              </Form.Group>
+            </Col>
+            <Col lg={12}>
+              <Form.Group className="form-group">
+                <Form.Label className="">Empresa/Cliente</Form.Label>{" "}
+                <Form.Control
+                  className="form-control"
+                  placeholder="Nome do Agendamento"
+                  type="text"
+                  value={singleSelectCampaign?.label || ""}
+                  disabled={true}
+                />
+              </Form.Group>
+            </Col>
+            <Col lg={12}>
+              <Form.Group className="form-group">
+                <Form.Label className="">Campanha</Form.Label>{" "}
+                <Form.Control
+                  className="form-control"
+                  placeholder="Nome do Agendamento"
+                  type="text"
+                  value={singleSelectCampaign?.label || ""}
+                  disabled={true}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Button
+            variant=""
+            aria-label="Confirm"
+            className="btn ripple btn-primary pd-x-25"
+            type="button"
+            onClick={requestScheduleJob}
+          >
+            Agendar
+          </Button>{" "}
+          <Button
+            variant=""
+            aria-label="Close"
+            className="btn ripple btn-danger pd-x-25"
+            type="button"
+            onClick={handleCloseModalSchedule}
+          >
+            Cancelar
+          </Button>{" "}
         </Modal.Body>
       </Modal>
     </React.Fragment>

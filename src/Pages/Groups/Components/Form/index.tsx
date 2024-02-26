@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Col, Row, Form } from "react-bootstrap";
+import { Col, Row, Form, Toast } from "react-bootstrap";
 import Select from "../../../../components/Select";
 import { getInstancesList } from "../../../../services/InstancesService";
 import { useDispatch, useSelector } from "react-redux";
 import { setInstancesList } from "../../../../redux/actions/instances";
+import Creatable from "react-select/creatable";
+import { Alert } from "../../../../assets/plugins/bootstrap/js/bootstrap.bundle";
 
-const FileInput = ({ label }: any) => {
+const FileInput = ({ label, handleChangeFile, name, formValues }: any) => {
   return (
     <Row className="mb-2">
       <Col lg={12}>
@@ -17,9 +19,10 @@ const FileInput = ({ label }: any) => {
             className="form-control"
             type="file"
             id="formFile"
-            name="logo"
-            onChange={() => console.log("input")}
+            name={name}
+            onChange={handleChangeFile}
             required
+            value={formValues[name]}
             accept=".jpg, .jpeg"
           />
         </Form.Group>
@@ -34,6 +37,7 @@ const SelectNumberInput = ({
   name,
   inputsSelect,
 }: any) => {
+  const styledInput = inputsSelect.length === 1 ? {width: '100%'} : { width: 80, marginRight: 10 }
   return (
     <Row className="mb-2">
       <Col lg={12}>
@@ -47,9 +51,10 @@ const SelectNumberInput = ({
                 name={inpt.name}
                 type="number"
                 onChange={handleChangeValue}
-                style={{ width: 80, marginRight: 10 }}
-                min={0}
+                style={styledInput}
+                min={1}
                 required
+                defaultValue={inpt.defaultValue || 1}
               />
             ))}
           </div>
@@ -76,6 +81,68 @@ const TextInput = ({ label, required, type, name, handleChangeValue }: any) => {
             name={name}
           />
         </Form.Group>
+      </Col>
+    </Row>
+  );
+};
+
+const TextAreaInput = ({ label, required, type, name, handleChangeValue, formValues }: any) => {
+  return (
+    <Row className="mb-2">
+      <Col lg={12}>
+        <Form.Group className="form-group">
+          <Form.Label className="">{label}</Form.Label>{" "}
+          <Form.Control as="textarea" rows={3} className="form-control" onChange={(e) => {
+              console.log({ [e.target.name]: e.target.value });
+              handleChangeValue(e);
+            }}
+            required={required}
+            value={formValues[name]}
+            name={name}/>
+        </Form.Group>
+      </Col>
+    </Row>
+  );
+};
+
+const SelectOptions = ({ label, name, handleChangeValue, placeholder }: any) => {
+  const handleChangeOptions = (options: any) => {
+    const value: string[] = []
+    options.forEach((opt: any) => {
+        value.push(opt.value)
+    });
+
+    const event = {
+      target: {
+        name,
+        value
+      }
+    }
+
+    handleChangeValue(event)
+  };
+
+  return (
+    <Row className="mb-2">
+      <Col lg={12}>
+        <Form.Group className="form-group">
+          <Form.Label className="">{label}</Form.Label>{" "}
+          <Creatable
+                  placeholder={placeholder}
+                  classNamePrefix="background"
+                  isMulti
+                  name={name}
+                  onChange={(e) => handleChangeOptions(e)}
+                />
+        </Form.Group>
+{/*         <div>
+        <button onClick={openAlert} className="btn-sm btn-primary mt-2" style={{marginRight: 10, border: 'none'}}>
+					        Adicionar Opção
+					      </button>
+        <button className="btn-sm btn-danger mt-2" style={{border: 'none'}}>
+					        Remover Opção
+					      </button>
+        </div> */}
       </Col>
     </Row>
   );
@@ -116,6 +183,15 @@ const SelectFormInput = ({
         .flat(1);
 
       setInstancesAll(newInstances);
+      if(!!newInstances.length) {
+        const event = {
+          target: {
+            name: 'instanceId',
+            value: newInstances[0].value
+          }
+        }
+        handleChangeValue(event)
+      }
     } catch (error) {
       console.log(error);
     }
@@ -151,6 +227,10 @@ const Factory: React.FC = (props: any) => {
       return <SelectFormInput {...props} />;
     case "selectNumber":
       return <SelectNumberInput {...props} />;
+    case "textArea":
+      return <TextAreaInput {...props} />
+    case "selectOptions":
+      return <SelectOptions {...props} />
     default:
       return <TextInput {...props} />;
   }

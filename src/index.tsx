@@ -7,6 +7,7 @@ import "./index.scss";
 import Loader from "./shade/Loaders/Loaders";
 import Perfil from "./Pages/Perfil";
 import { ToastContainer } from "react-toastify";
+import { Spinner } from "react-bootstrap";
 
 const App = React.lazy(() => import("../src/shade/layouts/App"));
 const Switcherapp = React.lazy(
@@ -350,6 +351,7 @@ const AuthSignup = React.lazy(() => import("./Authentication/Signup"));
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
+
 root.render(
   <React.Fragment>
     <BrowserRouter>
