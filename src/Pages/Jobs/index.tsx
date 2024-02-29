@@ -259,7 +259,7 @@ export default function Jobs() {
             <span className="">
               <OverlayTrigger
                 placement="top"
-                overlay={<Tooltip>Enviar Job</Tooltip>}
+                overlay={<Tooltip>Testar Job</Tooltip>}
               >
                 <Button
                   variant=""
