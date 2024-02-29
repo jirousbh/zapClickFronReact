@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '18'
       - name: Install dependencies
-        run: yarn ci
+        run: yarn install
       - name: Build dependencies
         run: yarn run build
       - name: Archive production artifact
