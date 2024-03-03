@@ -47,7 +47,7 @@ const INITIAL_STATE = {
   projectId: "",
   adminNumbers: "",
   extraAdmimNumber: "",
-  groupName: "asd",
+  groupName: "",
   file: "",
   btnMessage: "",
   btnOptions: [],
@@ -55,6 +55,8 @@ const INITIAL_STATE = {
   pollOptions: [],
   name: "",
   startTime: "",
+  useMentioned: false,
+  grpMessage: ""
 };
 
 export default function Dashboard() {
@@ -470,6 +472,7 @@ export default function Dashboard() {
     setShow(false);
     setSuccess([]);
     setInfoProgress(null);
+    setFormValues(INITIAL_STATE);
   }
 
   const requestScheduleJob = async () => {
@@ -481,7 +484,7 @@ export default function Dashboard() {
       toast(schedule.data.message)
     } catch (error) {
       handleCloseModalSchedule()
-      toast("Não foi possível criar o Agendamento, tente novamente!")
+      toast("Não foi possível criar o Agendamento, Tente Novamente!")
     }
   };
 

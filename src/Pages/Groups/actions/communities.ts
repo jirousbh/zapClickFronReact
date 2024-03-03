@@ -32,6 +32,7 @@ export const communities = [
     name: "Renomear",
     active: false,
     type: "communities",
+    sendFunction: "renameGroup",
     inputs: [
       {
         ...input,
@@ -58,7 +59,6 @@ export const communities = [
       },
       {
         label: "Agendar Comunidade(s)",
-        action: () => console.log("Agendar"),
       },
     ],
   },

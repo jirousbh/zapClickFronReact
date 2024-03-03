@@ -7,7 +7,6 @@ export const createGroupWhatsapp = async ({
   project,
   extraAdminNumber,
 }: any) => {
-  /* project: {name: ""} */
   console.log(
     {
       projectId,

@@ -18,17 +18,7 @@ export const sendGroupMessageWhatsapp = async ({
     },
     "@@@ create"
   );
-  return FirebaseService.callFirebaseFunction(
-    "sendGroupMessage",
-    {
-      projectId,
-      instanceId,
-      linkId,
-      grpMessage,
-      useMentioned,
-    },
-    noCache
-  );
+  
 };
 
 export const sendGroupImageWhatsapp = async ({
@@ -129,7 +119,7 @@ export const sendGroupButtonWhatsapp = async ({
     },
     "@@@ create"
   );
-  /* return FirebaseService.callFirebaseFunction(
+  return FirebaseService.callFirebaseFunction(
     "sendGroupButton",
     {
       projectId,
@@ -139,7 +129,7 @@ export const sendGroupButtonWhatsapp = async ({
       btnOptions,
     },
     noCache
-  ); */
+  );
 };
 
 export const sendGroupFileWhatsapp = async ({

@@ -5,7 +5,33 @@ import { getInstancesList } from "../../../../services/InstancesService";
 import { useDispatch, useSelector } from "react-redux";
 import { setInstancesList } from "../../../../redux/actions/instances";
 import Creatable from "react-select/creatable";
-import { Alert } from "../../../../assets/plugins/bootstrap/js/bootstrap.bundle";
+
+const SwitchToggle = ({ label, handleChangeValue, name, formValues }: any) => {
+  return (
+    <Row className="mb-2">
+      <Col lg={12}>
+        <Form.Group className="form-group">
+          <Form.Label className="">{label}</Form.Label>{" "}
+          <Form.Check
+            type="switch"
+            id="custom-switch"
+            name={name}
+            onChange={(e) => {
+              const event = {
+                target: {
+                  name,
+                  value: e.target.checked
+                }
+              }
+              handleChangeValue(event)
+            }}
+            value={formValues[name]}
+          />
+        </Form.Group>
+      </Col>
+    </Row>
+  );
+};
 
 const FileInput = ({ label, handleChangeFile, name, formValues }: any) => {
   return (
@@ -36,8 +62,12 @@ const SelectNumberInput = ({
   handleChangeValue,
   name,
   inputsSelect,
+  formValues
 }: any) => {
-  const styledInput = inputsSelect.length === 1 ? {width: '100%'} : { width: 80, marginRight: 10 }
+  const styledInput =
+    inputsSelect.length === 1
+      ? { width: "100%" }
+      : { width: 80, marginRight: 10 };
   return (
     <Row className="mb-2">
       <Col lg={12}>
@@ -55,6 +85,7 @@ const SelectNumberInput = ({
                 min={1}
                 required
                 defaultValue={inpt.defaultValue || 1}
+                value={formValues[name]}
               />
             ))}
           </div>
@@ -64,7 +95,7 @@ const SelectNumberInput = ({
   );
 };
 
-const TextInput = ({ label, required, type, name, handleChangeValue }: any) => {
+const TextInput = ({ label, required, type, name, handleChangeValue, formValues}: any) => {
   return (
     <Row className="mb-2">
       <Col lg={12}>
@@ -79,6 +110,7 @@ const TextInput = ({ label, required, type, name, handleChangeValue }: any) => {
             }}
             required={required}
             name={name}
+            value={formValues[name]}
           />
         </Form.Group>
       </Col>
@@ -86,40 +118,58 @@ const TextInput = ({ label, required, type, name, handleChangeValue }: any) => {
   );
 };
 
-const TextAreaInput = ({ label, required, type, name, handleChangeValue, formValues }: any) => {
+const TextAreaInput = ({
+  label,
+  required,
+  type,
+  name,
+  handleChangeValue,
+  formValues,
+}: any) => {
   return (
     <Row className="mb-2">
       <Col lg={12}>
         <Form.Group className="form-group">
           <Form.Label className="">{label}</Form.Label>{" "}
-          <Form.Control as="textarea" rows={3} className="form-control" onChange={(e) => {
+          <Form.Control
+            as="textarea"
+            rows={3}
+            className="form-control"
+            onChange={(e) => {
               console.log({ [e.target.name]: e.target.value });
               handleChangeValue(e);
             }}
             required={required}
             value={formValues[name]}
-            name={name}/>
+            name={name}
+          />
         </Form.Group>
       </Col>
     </Row>
   );
 };
 
-const SelectOptions = ({ label, name, handleChangeValue, placeholder }: any) => {
+const SelectOptions = ({
+  label,
+  name,
+  handleChangeValue,
+  placeholder,
+  formValues
+}: any) => {
   const handleChangeOptions = (options: any) => {
-    const value: string[] = []
+    const value: string[] = [];
     options.forEach((opt: any) => {
-        value.push(opt.value)
+      value.push(opt.value);
     });
 
     const event = {
       target: {
         name,
-        value
-      }
-    }
+        value,
+      },
+    };
 
-    handleChangeValue(event)
+    handleChangeValue(event);
   };
 
   return (
@@ -128,14 +178,15 @@ const SelectOptions = ({ label, name, handleChangeValue, placeholder }: any) => 
         <Form.Group className="form-group">
           <Form.Label className="">{label}</Form.Label>{" "}
           <Creatable
-                  placeholder={placeholder}
-                  classNamePrefix="background"
-                  isMulti
-                  name={name}
-                  onChange={(e) => handleChangeOptions(e)}
-                />
+            placeholder={placeholder}
+            classNamePrefix="background"
+            isMulti
+            name={name}
+            onChange={(e) => handleChangeOptions(e)}
+            value={formValues[name]}
+          />
         </Form.Group>
-{/*         <div>
+        {/*         <div>
         <button onClick={openAlert} className="btn-sm btn-primary mt-2" style={{marginRight: 10, border: 'none'}}>
 					        Adicionar Opção
 					      </button>
@@ -153,6 +204,7 @@ const SelectFormInput = ({
   instances,
   handleChangeValue,
   name,
+  formValues
 }: any) => {
   const [instancesAll, setInstancesAll] = useState([]);
   const instancesList = useSelector(
@@ -163,13 +215,13 @@ const SelectFormInput = ({
   const fetchClientsResult = async () => {
     try {
       let instancesListLocal = instancesList;
-      console.log(instancesListLocal, '@@@ instancesListLocal')
+      console.log(instancesListLocal, "@@@ instancesListLocal");
       if (!instancesListLocal.length) {
         const { data } = await getInstancesList();
         instancesListLocal = data;
         dispatch(setInstancesList(data));
       }
-      console.log(instances, '@@@ instances')
+      console.log(instances, "@@@ instances");
       const newInstances = instances
         .map((ist: any) => {
           const newData = instancesListLocal
@@ -183,14 +235,14 @@ const SelectFormInput = ({
         .flat(1);
 
       setInstancesAll(newInstances);
-      if(!!newInstances.length) {
+      if (!!newInstances.length) {
         const event = {
           target: {
-            name: 'instanceId',
-            value: newInstances[0].value
-          }
-        }
-        handleChangeValue(event)
+            name: "instanceId",
+            value: newInstances[0].value,
+          },
+        };
+        handleChangeValue(event);
       }
     } catch (error) {
       console.log(error);
@@ -228,9 +280,11 @@ const Factory: React.FC = (props: any) => {
     case "selectNumber":
       return <SelectNumberInput {...props} />;
     case "textArea":
-      return <TextAreaInput {...props} />
+      return <TextAreaInput {...props} />;
     case "selectOptions":
-      return <SelectOptions {...props} />
+      return <SelectOptions {...props} />;
+      case "switch":
+        return <SwitchToggle {...props} />
     default:
       return <TextInput {...props} />;
   }
