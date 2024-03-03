@@ -37,11 +37,11 @@ const functions = getFunctions(getApp());
 
 let verboseFunctions = false;
 
-// if (
-// 	location.hostname === "localhost" ||
-// 	location.hostname === "127.0.0.1" ||
-// 	location.hostname === "0.0.0.0"
-// ) {
+if (
+	window.location.hostname === "localhost" ||
+	window.location.hostname === "127.0.0.1" ||
+	window.location.hostname === "0.0.0.0"
+) {
 // functions.useEmulator("localhost", 5001);
 //db.useEmulator("localhost", 9001);
 //auth.useEmulator("http://localhost:9099");
@@ -52,7 +52,7 @@ let verboseFunctions = false;
  connectFunctionsEmulator(functions, "xmicroserver.ddns.net", 5002);
  db.useEmulator("xmicroserver.ddns.net", 8070);
  auth.useEmulator("http://xmicroserver.ddns.net:9099");
-// }
+ }
 
 FirebaseService.init(ttlStorage, functions, verboseFunctions);
 

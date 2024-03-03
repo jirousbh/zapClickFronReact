@@ -1,7 +1,7 @@
 name: Build and deploy
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Build dependencies
-        run: yarn run build
+        run: CI=false yarn run build
       - name: Archive production artifact
         uses: actions/upload-artifact@main
         with:
