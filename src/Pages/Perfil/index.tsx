@@ -29,7 +29,8 @@ export default function Perfil() {
 
   const fetchUser = async () => {
     try {
-      const { data } = await getUserDetails("mendesbarbosatst@gmail.com");
+      const userEmail = localStorage.getItem('#email') || ""
+      const { data } = await getUserDetails(userEmail);
       setUser(data);
     } catch (error) {
       console.log(error);

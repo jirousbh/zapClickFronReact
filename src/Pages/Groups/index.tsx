@@ -282,6 +282,7 @@ export default function Dashboard() {
     );
     setSingleSelectCampaign(selectedCampaign);
     setupGroups(singleSelectCampaign);
+    dispatch(setSelectedCampaignId(value));
   };
 
   const setQrCode = () => {
@@ -327,7 +328,7 @@ export default function Dashboard() {
     });
 
     if (!campaignsMapped.length) return;
-
+    console.log(selectedCampaignId, 'selectedCampaignId')
     if (!!selectedCampaignId) {
       const campaigns = campaignsMapped.map((campaign: any) => ({
         ...campaign,
@@ -337,7 +338,7 @@ export default function Dashboard() {
       const selectedCampaign = campaigns.find(
         (campaign: any) => campaign.value === selectedCampaignId
       );
-
+      console.log(selectedCampaign, 'selectedCampaign')
       onSelect(selectedCampaign);
       setCampaignOptions(campaigns);
       return;

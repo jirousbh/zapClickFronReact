@@ -31,17 +31,18 @@ const SignIn = () => {
       .signInWithEmailAndPassword(email, password)
       .then((user) => {
         console.log(user);
+        localStorage.setItem("#email", email)
         routeChange();
       })
       .catch((err) => {
         console.log(err);
 
         let errmsg = err.message;
-        if (err.code == "auth/wrong-password")
+        if (err.code === "auth/wrong-password")
           errmsg = "Senha inválida. Tente novamente";
-        else if (err.code == "auth/user-not-found")
+        else if (err.code === "auth/user-not-found")
           errmsg = "Usuário não encontrado";
-        else if (err.code == "auth/email-already-in-use")
+        else if (err.code === "auth/email-already-in-use")
           errmsg = "Este e-mail já é utlizado por outra conta.";
 
         setError(errmsg);

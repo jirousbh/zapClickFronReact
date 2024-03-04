@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import Select, { SingleValue } from "react-select";
+import { SingleValue } from "react-select";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -22,7 +22,7 @@ import {
 
 import { GlobalFilter } from "../Dashboard/data";
 
-import { setCampaignsList } from "../../redux/actions/campaign";
+import { setCampaignsList, setSelectedCampaignId } from "../../redux/actions/campaign";
 import { setSelectedUtm } from "../../redux/actions/shorteners";
 
 import { SHORTENERS_COLUMNS } from "./ShortenersTableConfig";
@@ -32,6 +32,7 @@ import {
   deleteShortener,
   getShortenersList,
 } from "../../services/ShortenersService";
+import Select from "../../components/Select";
 
 export default function Dashboard() {
   let navigate = useNavigate();
@@ -81,42 +82,6 @@ export default function Dashboard() {
   }: any = tableInstance;
 
   const { globalFilter, pageIndex, pageSize } = state;
-
-  const setCampaignsOptions = async () => {
-    let campaignsListLocal = campaignsList;
-    if (!campaignsListLocal.length) {
-      const fetchCampaignsResult = await getCampaignsList(false);
-
-      if (fetchCampaignsResult?.data.length) {
-        campaignsListLocal = fetchCampaignsResult?.data;
-        dispatch(setCampaignsList(fetchCampaignsResult?.data));
-      }
-    }
-
-    const campaignsMapped = campaignsListLocal.map((campaign: any) => {
-      return {
-        value: campaign.id,
-        label: campaign.name,
-        data: campaign,
-      };
-    });
-
-    if (campaignsMapped.length) {
-      if (selectedCampaignId) {
-        const selectedCampaign = campaignsMapped.find(
-          (campaign: any) => campaign.id === selectedCampaignId
-        );
-
-        if (selectedCampaign) {
-          onSelect(selectedCampaign);
-
-          return setOptions(campaignsMapped);
-        }
-      }
-
-      return setOptions(campaignsMapped);
-    }
-  };
 
   const goToCreate = (isEdit: boolean = false, link: any = null) => {
     let path = `${process.env.PUBLIC_URL}/shortener-new/`;
@@ -235,6 +200,60 @@ export default function Dashboard() {
     setupShorteners(value);
   };
 
+  const [campaignOptions, setCampaignOptions] = useState<any>([]);
+
+  const handleCampaignSelect = ({ value }: any) => {
+    const selectedCampaign = campaignOptions.find(
+      (campaign: any) => campaign.value === value
+    );
+    dispatch(setSelectedCampaignId(value))
+  };
+  
+  const setCampaignsOptions = async () => {
+    let campaignsListLocal = campaignsList;
+    if (!campaignsListLocal.length) {
+      const fetchCampaignsResult = await getCampaignsList(false);
+
+      if (fetchCampaignsResult?.data.length) {
+        campaignsListLocal = fetchCampaignsResult?.data;
+        dispatch(setCampaignsList(fetchCampaignsResult?.data));
+      }
+    }
+
+    const campaignsMapped = campaignsListLocal.map((campaign: any) => {
+      return {
+        value: campaign.id,
+        label: campaign.name,
+        data: campaign,
+      };
+    });
+
+    if (!campaignsMapped.length) return;
+    console.log(selectedCampaignId, 'selectedCampaignId leads')
+    if (!!selectedCampaignId) {
+      const campaigns = campaignsMapped.map((campaign: any) => ({
+        ...campaign,
+        selected: campaign.value === selectedCampaignId,
+      }));
+
+      const selectedCampaign = campaigns.find(
+        (campaign: any) => campaign.value === selectedCampaignId
+      );
+
+      onSelect(selectedCampaign);
+      setCampaignOptions(campaigns);
+      return;
+    }
+
+    const campaigns = campaignsMapped.map((campaign: any, index: any) => ({
+      ...campaign,
+      selected: index === 0,
+    }));
+
+    onSelect(campaigns[0]);
+    setCampaignOptions(campaigns);
+  };
+
   useEffect(() => {
     setCampaignsOptions();
   }, []);
@@ -258,13 +277,10 @@ export default function Dashboard() {
             <div className="mb-4">
               <p className="mg-b-10">Campanha:</p>
               <div className=" SlectBox">
-                <Select
-                  defaultValue={singleselect}
-                  onChange={onSelect}
-                  options={options}
-                  placeholder="Selecione uma campanha"
-                  classNamePrefix="selectform"
-                />
+              <Select
+              options={campaignOptions}
+              onChange={(e) => handleCampaignSelect({ value: e.target.value })}
+            />
               </div>
             </div>
           </div>
