@@ -99,9 +99,8 @@ export default function Dashboard() {
 
       const campaignsUpdated = data.map((campaign) => {
         return {
-          id: campaign.id,
+          name_id: campaign.name,
           name: (
-            // eslint-disable-next-line jsx-a11y/anchor-is-valid
             <p
               onClick={() => navigateTo("campaign-groups/", campaign.id)}
               style={{ color: "#2c7be5", cursor: "pointer", fontSize: 15 }}
@@ -224,6 +223,7 @@ export default function Dashboard() {
         totalClicks,
       });
     } else {
+      dispatch(setCampaignsList([]));
       setCampaignsListLocal([
         {
           id: 0,
@@ -247,8 +247,10 @@ export default function Dashboard() {
     setLoadingCampaigns(true);
 
     try {
-      const fetchProjResult = await getCampaignsList(showEnded);
-
+      const viewEmail = window.sessionStorage.getItem("#email_view") || null
+      console.log(viewEmail, "email @@@@@@")
+      const fetchProjResult = await getCampaignsList(showEnded, viewEmail);
+      console.log(fetchProjResult)
       setupProjectList(fetchProjResult.data, false);
     } catch (error) {
       setError(true);

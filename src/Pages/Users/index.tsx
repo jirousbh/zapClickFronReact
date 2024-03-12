@@ -30,7 +30,7 @@ import {
 import { getClient } from "../../services/ClientsService";
 import { getCompaniesList } from "../../services/CompaniesService";
 import { formatDate } from "../../utils/dates";
-import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 const INITIAL_STATE = {
   company: { label: "Selecione uma Empresa", value: "", selected: true },
@@ -38,6 +38,7 @@ const INITIAL_STATE = {
 };
 
 export default function Users() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<any>([]);
   const [userModal, setUserModal] = useState(false);
   const [emailModal, setEmailModal] = useState(false);
@@ -81,6 +82,11 @@ export default function Users() {
     });
   };
 
+  const handleChangeUserView = (email: string) => {
+    window.sessionStorage.setItem("#email_view", email);
+    navigate("/dashboard");
+  };
+
   const parseUsers = useCallback((users: any) => {
     return users.map((user: any) => {
       const status = !user.disabled ? (
@@ -108,7 +114,17 @@ export default function Users() {
       return {
         id: user.uid,
         name: user.displayName,
-        email: user.email,
+        email: (
+          <>
+            {user.email}
+            {"  "}
+            <i
+              className="fas fa-eye"
+              style={{ color: "#2c7be5", cursor: "pointer" }}
+              onClick={() => handleChangeUserView(user.email)}
+            />
+          </>
+        ),
         password: user.passwordSalt,
         creationTime: formatDate(user.metadata.creationTime),
         lastSignInTime: formatDate(user.metadata.creationTime),
@@ -248,7 +264,7 @@ export default function Users() {
       user.email
     );
 
-    console.log(alternateEmails)
+    console.log(alternateEmails);
     const newAlternateEmails = alternateEmails.filter(
       (alt: any) => alt !== user.email
     );

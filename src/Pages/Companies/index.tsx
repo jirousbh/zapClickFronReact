@@ -32,6 +32,9 @@ import { useDispatch, useSelector } from "react-redux";
 
 export default function Companies() {
   const dispatch = useDispatch();
+  const email = useSelector(
+    (state: any) => state.usersReducer.email
+  );
 
   const [newCompanyModal, setNewCompanyModal] = useState(false);
 
@@ -147,7 +150,7 @@ export default function Companies() {
 
   const setupCompaniesList = async (showHidden: boolean) => {
     try {
-      const fetchCompaniesResult = await getCompaniesList(null, showHidden);
+      const fetchCompaniesResult = await getCompaniesList(email, showHidden);
 
       if (fetchCompaniesResult?.data.length) {
         const companiesMapped = fetchCompaniesResult.data.map(

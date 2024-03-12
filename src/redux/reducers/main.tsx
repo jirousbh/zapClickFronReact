@@ -7,6 +7,7 @@ import { companiesReducer } from "./companies";
 import { instancesReducer } from "./instances";
 import { shortenersReducer } from "./shorteners";
 import { clientsReducer } from "./clients";
+import { usersReducer } from "./users";
 
 const rootred = combineReducers({
   cartreducer,
@@ -16,6 +17,7 @@ const rootred = combineReducers({
   instancesReducer,
   shortenersReducer,
   clientsReducer,
+  usersReducer,
 });
 
 export default rootred;

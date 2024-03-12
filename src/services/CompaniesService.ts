@@ -8,7 +8,7 @@ const getCompaniesList = async (
     "fetchCompanies",
     {
       showHidden,
-      userEmail: null,
+      userEmail,
     }
   );
 

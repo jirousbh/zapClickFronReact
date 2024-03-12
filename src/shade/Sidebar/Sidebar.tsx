@@ -1,12 +1,13 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { MENUITEMS } from "./SideMenu";
 import Scrollbars from "react-custom-scrollbars";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
 let history: any = [];
 
 const Sidebar = () => {
+  const navigate = useNavigate();
   let location = useLocation();
   const [menuitems, setMenuitems]: any = useState(MENUITEMS);
   // initial loading
@@ -203,6 +204,17 @@ const Sidebar = () => {
       document.querySelector(".app")?.classList.remove("sidenav-toggled-open");
     }
   }
+
+  const emailView = !!window.sessionStorage.getItem("#email_view");
+
+  const userView = emailView
+    ? `Visualizando como: ${window.sessionStorage.getItem("#email_view")}`
+    : `Logado como: ${window.localStorage.getItem("#email")}`;
+
+  const handleChangeUserView = () => {
+    window.sessionStorage.removeItem("#email_view");
+    navigate("/dashboard");
+  };
 
   return (
     <>
@@ -503,6 +515,30 @@ const Sidebar = () => {
                     ))}
                   </Fragment>
                 ))}
+              </ul>
+              <ul style={{ marginTop: 40 }}>
+                <li
+                  style={{
+                    listStyle: "none",
+                    fontSize: 14,
+                    color: "#7b8191",
+                    fontWeight: "400",
+                  }}
+                >
+                  {userView}
+                  {emailView && (
+                    <button
+                      onClick={handleChangeUserView}
+                      style={{
+                        borderStyle: "none",
+                        background: "transparent",
+                        color: "#2c7be5",
+                      }}
+                    >
+                      - sair
+                    </button>
+                  )}
+                </li>
               </ul>
               <div className="slide-right" id="slide-right">
                 <svg

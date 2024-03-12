@@ -1,11 +1,14 @@
 import * as FirebaseService from "./FirebaseService";
+import { noCache } from "./Whatsapp/Common";
 
-const getCampaignsList = async (showEnded: boolean = false) => {
+const getCampaignsList = async (showEnded: boolean = false, userEmail: string | null = null) => {
   return FirebaseService.callFirebaseFunction(
     "fetchProjects",
     {
       showEnded,
+      userEmail
     }
+    , noCache
   );
 };
 

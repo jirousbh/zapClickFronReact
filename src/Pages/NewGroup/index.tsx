@@ -66,9 +66,10 @@ export default function NewGroup() {
   };
 
   const setCampaignsOptions = async () => {
+    const emailView = window.sessionStorage.getItem("#email_view") || null;
     let campaignsListLocal = campaignsList;
-    if (!campaignsListLocal.length) {
-      const fetchCampaignsResult = await getCampaignsList(false);
+    if (!campaignsListLocal.length || !!emailView) {
+      const fetchCampaignsResult = await getCampaignsList(false, emailView);
 
       if (fetchCampaignsResult?.data.length) {
         campaignsListLocal = fetchCampaignsResult?.data;

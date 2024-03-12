@@ -56,7 +56,7 @@ const INITIAL_STATE = {
   name: "",
   startTime: "",
   useMentioned: false,
-  grpMessage: ""
+  grpMessage: "",
 };
 
 export default function Dashboard() {
@@ -139,6 +139,7 @@ export default function Dashboard() {
 
   const setupGroups = async (campaign: any) => {
     const groupsResponse: any = await getGroupsByCampaign(campaign.value);
+
     if (groupsResponse?.data?.length) {
       const groupsList = groupsResponse?.data?.map((group: any) => {
         const urtToShow =
@@ -311,12 +312,12 @@ export default function Dashboard() {
   const setCampaignsOptions = async () => {
     let campaignsListLocal = campaignsList;
     if (!campaignsListLocal.length) {
-      const fetchCampaignsResult = await getCampaignsList(false);
+      const emailView = window.sessionStorage.getItem("#email_view") || null;
 
-      if (fetchCampaignsResult?.data.length) {
-        campaignsListLocal = fetchCampaignsResult?.data;
-        dispatch(setCampaignsList(fetchCampaignsResult?.data));
-      }
+      const fetchCampaignsResult = await getCampaignsList(false, emailView);
+
+      campaignsListLocal = fetchCampaignsResult?.data;
+      dispatch(setCampaignsList(fetchCampaignsResult?.data));
     }
 
     const campaignsMapped = campaignsListLocal.map((campaign: any) => {
@@ -328,7 +329,7 @@ export default function Dashboard() {
     });
 
     if (!campaignsMapped.length) return;
-    console.log(selectedCampaignId, 'selectedCampaignId')
+    console.log(selectedCampaignId, "selectedCampaignId");
     if (!!selectedCampaignId) {
       const campaigns = campaignsMapped.map((campaign: any) => ({
         ...campaign,
@@ -338,7 +339,7 @@ export default function Dashboard() {
       const selectedCampaign = campaigns.find(
         (campaign: any) => campaign.value === selectedCampaignId
       );
-      console.log(selectedCampaign, 'selectedCampaign')
+      console.log(selectedCampaign, "selectedCampaign");
       onSelect(selectedCampaign);
       setCampaignOptions(campaigns);
       return;
@@ -474,18 +475,22 @@ export default function Dashboard() {
     setSuccess([]);
     setInfoProgress(null);
     setFormValues(INITIAL_STATE);
-  }
+  };
 
   const requestScheduleJob = async () => {
-    try { //TODO: colocar toast
-      const schedule = await scheduleAddAction({...formValues, sendFunction: actionSelected.sendFunction});
+    try {
+      //TODO: colocar toast
+      const schedule = await scheduleAddAction({
+        ...formValues,
+        sendFunction: actionSelected.sendFunction,
+      });
       console.log(schedule.data.message);
-      setOpenModalSchedule(false)
-      closeModal()
-      toast(schedule.data.message)
+      setOpenModalSchedule(false);
+      closeModal();
+      toast(schedule.data.message);
     } catch (error) {
-      handleCloseModalSchedule()
-      toast("Não foi possível criar o Agendamento, Tente Novamente!")
+      handleCloseModalSchedule();
+      toast("Não foi possível criar o Agendamento, Tente Novamente!");
     }
   };
 
@@ -501,12 +506,13 @@ export default function Dashboard() {
           <div>
             <div className="mb-4">
               <p className="mg-b-10">Campanha:</p>
-              <div className=" SlectBox">
+              <div className="SelectBox">
                 <Select
                   options={campaignOptions}
                   onChange={(e) =>
                     handleCampaignSelect({ value: e.target.value })
                   }
+                  disabled={!campaignOptions.length}
                 />
               </div>
             </div>
@@ -548,128 +554,130 @@ export default function Dashboard() {
             </Button>
           </Col>
         ) : null}
-        <div style={{marginBottom: 20}}>
-          <ButtonGroup>
-            <Dropdown>
-              <Dropdown.Toggle
-                variant=""
-                aria-expanded="false"
-                aria-haspopup="true"
-                className="btn ripple btn-primary"
-                data-bs-toggle="dropdown"
-                id="dropdownMenuButton"
-                type="button"
-              >
-                Grupos
-              </Dropdown.Toggle>
-              <Dropdown.Menu
-                className="dropdown-menu tx-13"
-                style={{ margin: "0px" }}
-              >
-                {buttons
-                  .filter((bt) => bt.type === "groups")
-                  .map((bt) => (
-                    <Dropdown.Item
-                      active={bt.active}
-                      onClick={() => handleActiveButton(bt.id)}
-                    >
-                      {bt.name}
-                    </Dropdown.Item>
-                  ))}
-              </Dropdown.Menu>
-            </Dropdown>
-          </ButtonGroup>
-          <ButtonGroup className="ms-2 mt-2 mb-2">
-            <Dropdown>
-              <Dropdown.Toggle
-                variant=""
-                aria-expanded="false"
-                aria-haspopup="true"
-                className="btn ripple btn-secondary"
-                data-bs-toggle="dropdown"
-                id="dropdownMenuButton"
-                type="button"
-              >
-                Comunidade
-              </Dropdown.Toggle>
-              <Dropdown.Menu
-                className="dropdown-menu tx-13"
-                style={{ margin: "0px" }}
-              >
-                {buttons
-                  .filter((bt) => bt.type === "communities")
-                  .map((bt) => (
-                    <Dropdown.Item
-                      active={bt.active}
-                      onClick={() => handleActiveButton(bt.id)}
-                    >
-                      {bt.name}
-                    </Dropdown.Item>
-                  ))}
-              </Dropdown.Menu>
-            </Dropdown>
-          </ButtonGroup>
-          <ButtonGroup className="ms-2 mt-2 mb-2">
-            <Dropdown>
-              <Dropdown.Toggle
-                variant=""
-                aria-expanded="false"
-                aria-haspopup="true"
-                className="btn ripple btn-danger"
-                data-bs-toggle="dropdown"
-                id="dropdownMenuButton"
-                type="button"
-              >
-                Envios
-              </Dropdown.Toggle>
-              <Dropdown.Menu
-                className="dropdown-menu tx-13"
-                style={{ margin: "0px" }}
-              >
-                {buttons
-                  .filter((bt) => bt.type === "sends")
-                  .map((bt) => (
-                    <Dropdown.Item
-                      active={bt.active}
-                      onClick={() => handleActiveButton(bt.id)}
-                    >
-                      {bt.name}
-                    </Dropdown.Item>
-                  ))}
-              </Dropdown.Menu>
-            </Dropdown>
-          </ButtonGroup>
-          <ButtonGroup className="ms-2 mt-2 mb-2">
-            <Dropdown>
-              <Dropdown.Toggle
-                variant=""
-                aria-expanded="false"
-                aria-haspopup="true"
-                className="btn ripple btn-primary"
-                data-bs-toggle="dropdown"
-                id="dropdownMenuButton"
-                type="button"
-              >
-                Leads
-              </Dropdown.Toggle>
-              <Dropdown.Menu
-                className="dropdown-menu tx-13"
-                style={{ margin: "0px" }}
-              >
-                {buttons
-                  .filter((bt) => bt.type === "leads")
-                  .map((bt) => (
-                    <Dropdown.Item
-                      active={bt.active}
-                      onClick={() => handleActiveButton(bt.id)}
-                    >
-                      {bt.name}
-                    </Dropdown.Item>
-                  ))}
-              </Dropdown.Menu>
-            </Dropdown>
-          </ButtonGroup>
-        </div>
+        {singleSelectCampaign && (
+          <div style={{ marginBottom: 20 }}>
+            <ButtonGroup>
+              <Dropdown>
+                <Dropdown.Toggle
+                  variant=""
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  className="btn ripple btn-primary"
+                  data-bs-toggle="dropdown"
+                  id="dropdownMenuButton"
+                  type="button"
+                >
+                  Grupos
+                </Dropdown.Toggle>
+                <Dropdown.Menu
+                  className="dropdown-menu tx-13"
+                  style={{ margin: "0px" }}
+                >
+                  {buttons
+                    .filter((bt) => bt.type === "groups")
+                    .map((bt) => (
+                      <Dropdown.Item
+                        active={bt.active}
+                        onClick={() => handleActiveButton(bt.id)}
+                      >
+                        {bt.name}
+                      </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </ButtonGroup>
+            <ButtonGroup className="ms-2 mt-2 mb-2">
+              <Dropdown>
+                <Dropdown.Toggle
+                  variant=""
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  className="btn ripple btn-secondary"
+                  data-bs-toggle="dropdown"
+                  id="dropdownMenuButton"
+                  type="button"
+                >
+                  Comunidade
+                </Dropdown.Toggle>
+                <Dropdown.Menu
+                  className="dropdown-menu tx-13"
+                  style={{ margin: "0px" }}
+                >
+                  {buttons
+                    .filter((bt) => bt.type === "communities")
+                    .map((bt) => (
+                      <Dropdown.Item
+                        active={bt.active}
+                        onClick={() => handleActiveButton(bt.id)}
+                      >
+                        {bt.name}
+                      </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </ButtonGroup>
+            <ButtonGroup className="ms-2 mt-2 mb-2">
+              <Dropdown>
+                <Dropdown.Toggle
+                  variant=""
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  className="btn ripple btn-danger"
+                  data-bs-toggle="dropdown"
+                  id="dropdownMenuButton"
+                  type="button"
+                >
+                  Envios
+                </Dropdown.Toggle>
+                <Dropdown.Menu
+                  className="dropdown-menu tx-13"
+                  style={{ margin: "0px" }}
+                >
+                  {buttons
+                    .filter((bt) => bt.type === "sends")
+                    .map((bt) => (
+                      <Dropdown.Item
+                        active={bt.active}
+                        onClick={() => handleActiveButton(bt.id)}
+                      >
+                        {bt.name}
+                      </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </ButtonGroup>
+            <ButtonGroup className="ms-2 mt-2 mb-2">
+              <Dropdown>
+                <Dropdown.Toggle
+                  variant=""
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  className="btn ripple btn-primary"
+                  data-bs-toggle="dropdown"
+                  id="dropdownMenuButton"
+                  type="button"
+                >
+                  Leads
+                </Dropdown.Toggle>
+                <Dropdown.Menu
+                  className="dropdown-menu tx-13"
+                  style={{ margin: "0px" }}
+                >
+                  {buttons
+                    .filter((bt) => bt.type === "leads")
+                    .map((bt) => (
+                      <Dropdown.Item
+                        active={bt.active}
+                        onClick={() => handleActiveButton(bt.id)}
+                      >
+                        {bt.name}
+                      </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </ButtonGroup>
+          </div>
+        )}
       </Row>
       {singleSelectCampaign ? (
         <Row>
@@ -810,6 +818,7 @@ export default function Dashboard() {
             onClick={() => navigateToNewGroup()}
             variant=""
             className="btn me-2 btn-primary mb-4"
+            disabled={!singleSelectCampaign}
           >
             Cadastrar Grupo
           </Button>
@@ -817,6 +826,7 @@ export default function Dashboard() {
             onClick={() => navigateToNewGroup(false, null, true)}
             variant=""
             className="btn me-2 btn-secondary mb-4"
+            disabled={!singleSelectCampaign}
           >
             Cadastrar vários grupos
           </Button>
@@ -930,7 +940,7 @@ export default function Dashboard() {
             )}
           </div>
           <div>
-            {actionSelected?.buttons?.map((bt: any, index: number) => {              
+            {actionSelected?.buttons?.map((bt: any, index: number) => {
               const styled =
                 index === 0
                   ? "btn ripple btn-primary pd-x-25"

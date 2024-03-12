@@ -1,11 +1,14 @@
 import * as FirebaseService from "./FirebaseService";
+import { noCache } from "./Whatsapp/Common";
 
-const getGroupsByCampaign = async (campaignId: string) => {
+const getGroupsByCampaign = async (campaignId: string, userEmail: string | null = null) => {
   const response = await FirebaseService.callFirebaseFunction(
     "fetchLinksByProject",
     {
       projectId: campaignId,
-    }
+      userEmail
+    },
+    noCache
   );
 
   return response;
@@ -16,7 +19,7 @@ const updateGroup = async (
   groupId: number,
   campaignId: number
 ) => {
-  /* const response = await FirebaseService.callFirebaseFunction("editLink", {
+  const response = await FirebaseService.callFirebaseFunction("editLink", {
     link: groupId,
     project: campaignId,
     changes: {
@@ -24,7 +27,7 @@ const updateGroup = async (
     },
   });
 
-  return response; */
+  return response;
 };
 
 const createGroup = async (url: string, campaignId: number) => {
