@@ -99,7 +99,7 @@ export default function Users() {
         </span>
       );
 
-      const admin = user.customClaims.admin ? (
+      const admin = !!user?.customClaims?.admin ? (
         <span>
           <span className="text-danger">●</span> Admin{" "}
           <i className="fas fa-user-minus mr-4 text-success"></i>
