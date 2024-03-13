@@ -28,13 +28,10 @@ import {
   getCompaniesList,
 } from "../../services/CompaniesService";
 import { setCompaniesList } from "../../redux/actions/companies";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 export default function Companies() {
   const dispatch = useDispatch();
-  const email = useSelector(
-    (state: any) => state.usersReducer.email
-  );
 
   const [newCompanyModal, setNewCompanyModal] = useState(false);
 
@@ -150,7 +147,9 @@ export default function Companies() {
 
   const setupCompaniesList = async (showHidden: boolean) => {
     try {
-      const fetchCompaniesResult = await getCompaniesList(email, showHidden);
+      const email = window.sessionStorage.getItem("#email_view") || null
+
+      const fetchCompaniesResult = await getCompaniesList(showHidden, email);
 
       if (fetchCompaniesResult?.data.length) {
         const companiesMapped = fetchCompaniesResult.data.map(

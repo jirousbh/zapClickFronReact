@@ -1,8 +1,8 @@
 import * as FirebaseService from "./FirebaseService";
 
 const getCompaniesList = async (
-  userEmail?: string | null,
-  showHidden: boolean = false
+  showHidden: boolean = false,
+  userEmail: string | null = null
 ) => {
   const fetchCompaniesResult = await FirebaseService.callFirebaseFunction(
     "fetchCompanies",

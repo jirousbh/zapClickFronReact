@@ -9,12 +9,8 @@ import { Col, Row, Form, /* Card, */ Button, Modal } from "react-bootstrap";
 
 /* import { PERFIL_COLUMNS } from "./PerfilTableConfig"; */
 import { editUser, getUserDetails } from "../../services/usersService";
-import { useSelector } from "react-redux";
 
 export default function Perfil() {
-  const email = useSelector(
-    (state: any) => state.usersReducer.email
-  );
 
   const [user, setUser] = useState<any>({});
   const [userModal, setUserModal] = useState(false);
@@ -34,6 +30,7 @@ export default function Perfil() {
 
   const fetchUser = async () => {
     try {
+      const email = window.localStorage.getItem("#email") || window.sessionStorage.getItem("#email_view") || null
       const { data } = await getUserDetails(email);
       setUser(data);
     } catch (error) {

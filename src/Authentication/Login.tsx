@@ -31,6 +31,9 @@ const SignIn = () => {
       .signInWithEmailAndPassword(email, password)
       .then((user) => {
         console.log(user);
+        if(user.user?.email) {
+          window.localStorage.setItem("#email", user.user?.email)
+        }
         routeChange();
       })
       .catch((err) => {
