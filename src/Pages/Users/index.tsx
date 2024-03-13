@@ -177,7 +177,7 @@ export default function Users() {
 
   const formatSelectCompany = useCallback(async () => {
     const { data: clients } = await getClient(null, false);
-    const { data: companies } = await getCompaniesList(null, false);
+    const { data: companies } = await getCompaniesList(false, null);
 
     const company = companies.map((cmp: any) => {
       return {

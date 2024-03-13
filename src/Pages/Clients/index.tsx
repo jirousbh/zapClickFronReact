@@ -149,7 +149,7 @@ export default function Clients() {
     try {
       const { data: clients } = await getClient(null, showHidden);
       if (clients?.length) {
-        const { data: companies } = await getCompaniesList(null, true);
+        const { data: companies } = await getCompaniesList(true, null);
         const newClient = parseClient(clients, companies);
 
         const clientsMapped = newClient.map((client: any) => {

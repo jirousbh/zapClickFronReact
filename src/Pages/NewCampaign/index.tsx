@@ -85,7 +85,7 @@ export default function NewCampaign() {
     async (companyId = null) => {
       debugger;
       const { data: clients } = await getClient(null, false);
-      const { data: companies } = await getCompaniesList(null, false);
+      const { data: companies } = await getCompaniesList(false, null);
 
       const company = companies.map((cmp: any) => {
         return {
