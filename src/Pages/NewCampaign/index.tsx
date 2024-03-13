@@ -219,7 +219,7 @@ export default function NewCampaign() {
     auth.onAuthStateChanged(async (user) => {
       let companiesListLocal = companiesList;
       if (!companiesListLocal.length) {
-        const fetchCompaniesResult = await getCompaniesList(user?.email);
+        const fetchCompaniesResult = await getCompaniesList(true, user?.email);
 
         if (fetchCompaniesResult?.data.length) {
           companiesListLocal = fetchCompaniesResult?.data;
