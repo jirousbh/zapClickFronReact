@@ -100,7 +100,7 @@ export default function Clients() {
   const { globalFilter, pageIndex, pageSize } = state;
 
   const setCompanies = async () => {
-    const fetchCompaniesResult = await getCompaniesList(null);
+    const fetchCompaniesResult = await getCompaniesList(false, null);
 
     if (fetchCompaniesResult?.data.length) {
       dispatch(setCompaniesList(fetchCompaniesResult?.data));
