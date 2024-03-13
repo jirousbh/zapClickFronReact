@@ -3,8 +3,11 @@ import { Button, Col, Form, Row, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../Firebase/firebase";
 import "./css/Login.css";
+import { useDispatch } from "react-redux";
+import { setUSerView } from "../redux/actions/users";
 
 const SignIn = () => {
+  const dispatch = useDispatch();
   const [err, setError] = useState("");
   const [data, setData] = useState({
     email: "",
@@ -31,6 +34,7 @@ const SignIn = () => {
       .signInWithEmailAndPassword(email, password)
       .then((user) => {
         console.log(user);
+        dispatch(setUSerView(email));
         routeChange();
       })
       .catch((err) => {
