@@ -11,10 +11,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@main
-      - name: Use Node.js 18
+      - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
       - name: Install dependencies
         run: yarn install
       - name: Build dependencies
@@ -37,7 +37,7 @@ jobs:
           name: build
           path: build
       - name: Sync files to hosting
-        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with: 
           server: ftp.beta.zapclick.digital
           username: betazap@beta.zapclick.digital
