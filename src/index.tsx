@@ -2,7 +2,7 @@ import reportWebVitals from "./reportWebVitals";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Auth from "./services/Authentication/auth";
+import Auth from "./Authentication/auth";
 import "./index.scss";
 import Loader from "./shade/Loaders/Loaders";
 import Perfil from "./Pages/Perfil";
@@ -345,8 +345,8 @@ const DefaultTables = React.lazy(
 const DataTables = React.lazy(
   () => import("./components/Tables/DataTables/DataTables")
 );
-const AuthLogin = React.lazy(() => import("./services/Authentication/Login"));
-const AuthSignup = React.lazy(() => import("./services/Authentication/Signup"));
+const AuthLogin = React.lazy(() => import("./Authentication/Login"));
+const AuthSignup = React.lazy(() => import("./Authentication/Signup"));
 //Form
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
