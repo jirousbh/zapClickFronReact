@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Col, Form, Row, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../../Firebase";
-import "./Login.css";
+import "./css/Login.css";
 
 const SignIn = () => {
   const [err, setError] = useState("");
@@ -31,9 +31,11 @@ const SignIn = () => {
       .signInWithEmailAndPassword(email, password)
       .then((user) => {
         console.log(user);
+
         if(user.user?.email) {
           window.localStorage.setItem("#email", user.user?.email)
         }
+        
         routeChange();
       })
       .catch((err) => {
@@ -70,7 +72,7 @@ const SignIn = () => {
                     <div className="wd-100p">
                       <div className="text-muted text-center mb-4">
                         <img
-                          src={require("../../assets/img/brand/logo_text.png")}
+                          src={require("../assets/img/brand/logo_text.png")}
                           className="sign-favicon ht-40"
                           alt="logo"
                         />

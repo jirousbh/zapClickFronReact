@@ -23,7 +23,7 @@ import {
   Modal,
 } from "react-bootstrap";
 
-import { auth } from "../../Firebase/firebase";
+import { auth } from "../../Firebase";
 
 import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 

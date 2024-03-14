@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../Firebase/firebase";
+import { auth } from "../Firebase";
 import {
   Button,
   Col,

@@ -22,7 +22,7 @@ import {
 
 import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 
-import { auth } from "../../Firebase/firebase";
+import { auth } from "../../Firebase";
 
 import { setCompaniesList } from "../../redux/actions/companies";
 

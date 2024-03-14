@@ -15,7 +15,7 @@ import {
 import { Link } from "react-router-dom";
 // import { LightgalleryProvider, LightgalleryItem } from "react-lightgallery";
 import { LightGallery } from "../Gallery/data";
-import { auth } from "../../../Firebase/firebase";
+import { auth } from "../../../Firebase";
 import { getUserDetails } from "../../../services/usersService";
 import IntlTelInput from "react-intl-tel-input";
 

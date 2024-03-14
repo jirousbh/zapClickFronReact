@@ -44,7 +44,7 @@ if (
 ) {
 // functions.useEmulator("localhost", 5001);
 //db.useEmulator("localhost", 9001);
-//auth.useEmulator("http://localhost:9099");
+//useEmulator("http://localhost:9099");
 // } else if (
 // 	location.hostname === "xmicroserver.ddns.net" ||
 // 	location.hostname === "192.168.1.14"

@@ -13,7 +13,7 @@ import {
   Modal,
 } from "react-bootstrap";
 
-import { auth } from "../../Firebase/firebase";
+import { auth } from "../../Firebase";
 import { setCompaniesList } from "../../redux/actions/companies";
 import { setInstancesList } from "../../redux/actions/instances";
 

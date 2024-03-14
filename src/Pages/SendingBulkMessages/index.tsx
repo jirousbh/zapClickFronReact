@@ -24,7 +24,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 
-import { auth } from "../../Firebase/firebase";
+import { auth } from "../../Firebase";
 
 import { setCampaignsList } from "../../redux/actions/campaign";
 import { setInstancesList } from "../../redux/actions/instances";

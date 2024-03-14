@@ -21,7 +21,7 @@ import {
 
 import { COLUMNS, DATATABLE, GlobalFilter } from "../Dashboard/data";
 import { COMPANIES_COLUMNS } from "./CompaniesTableConfig";
-import { auth } from "../../Firebase/firebase";
+import { auth } from "../../Firebase";
 import {
   createCompany,
   editCompany,

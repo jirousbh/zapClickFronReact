@@ -10,7 +10,7 @@ import {
 } from "react-bootstrap";
 import { Scrollbars } from "react-custom-scrollbars";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { auth } from "../../Firebase/firebase";
+import { auth } from "../../Firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { Delete } from "../../redux/actions/action";
 import ProductService from "../../services/ProductService";
