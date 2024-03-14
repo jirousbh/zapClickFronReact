@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Col, Form, Row, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../Firebase/firebase";
+import { auth } from "../../Firebase/firebase";
 import "./css/Login.css";
 
 const SignIn = () => {
@@ -31,9 +31,11 @@ const SignIn = () => {
       .signInWithEmailAndPassword(email, password)
       .then((user) => {
         console.log(user);
+
         if(user.user?.email) {
           window.localStorage.setItem("#email", user.user?.email)
         }
+        
         routeChange();
       })
       .catch((err) => {
