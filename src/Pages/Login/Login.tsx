@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Col, Form, Row, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../../Firebase/firebase";
-import "./css/Login.css";
+import "../../Authentication/css";
 
 const SignIn = () => {
   const [err, setError] = useState("");
