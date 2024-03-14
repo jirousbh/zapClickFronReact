@@ -345,7 +345,7 @@ const DefaultTables = React.lazy(
 const DataTables = React.lazy(
   () => import("./components/Tables/DataTables/DataTables")
 );
-const AuthLogin = React.lazy(() => import("./Authentication/Login"));
+const AuthLogin = React.lazy(() => import("./Pages/Login/Login"));
 const AuthSignup = React.lazy(() => import("./Authentication/Signup"));
 //Form
 const root = ReactDOM.createRoot(

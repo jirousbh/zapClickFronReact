@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Col, Form, Row, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../Firebase/firebase";
+import { auth } from "../../Firebase/firebase";
 import "./css/Login.css";
 
 const SignIn = () => {
@@ -70,7 +70,7 @@ const SignIn = () => {
                     <div className="wd-100p">
                       <div className="text-muted text-center mb-4">
                         <img
-                          src={require("../assets/img/brand/logo_text.png")}
+                          src={require("../../assets/img/brand/logo_text.png")}
                           className="sign-favicon ht-40"
                           alt="logo"
                         />
