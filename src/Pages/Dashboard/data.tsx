@@ -341,7 +341,12 @@ export class Viewers1 extends React.Component<
 export const COLUMNS: any = [
   {
     Header: "Nome",
-    accessor: "name",
+    Cell: ({ value }: any) => (
+      <p style={{ color: "#2c7be5", cursor: "pointer", fontSize: 15 }}>
+        {value}
+      </p>
+    ),
+    accessor: "name_community",
     className: "text-center ",
   },
   {

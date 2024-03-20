@@ -1,7 +1,7 @@
 import reportWebVitals from "./reportWebVitals";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Auth from "./Authentication/auth";
 import "./index.scss";
 import Loader from "./shade/Loaders/Loaders";
@@ -354,7 +354,7 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.Fragment>
-    <HashRouter>
+    <BrowserRouter>
       <React.Suspense fallback={<Loader />}>
         <Routes>
           <Route path={`${process.env.PUBLIC_URL}/`} element={<Auth />}>
@@ -945,7 +945,7 @@ root.render(
           <Route></Route>
         </Routes>
       </React.Suspense>
-    </HashRouter>
+    </BrowserRouter>
     <ToastContainer />
   </React.Fragment>
 );

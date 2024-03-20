@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [campaignsListLocal, setCampaignsListLocal] = useState([]);
   const [disabledCampaign, setDisabledCampaign] = useState(false);
   const [disabledStatus, setDisabledStatus] = useState(null);
+  const [campaigns, setCampaigns] = useState([])
 
   const openDisabledCampaignModal = (campaignId: string, active: string) => {
     setDisabledStatus({ campaignId, active });
@@ -83,10 +84,20 @@ export default function Dashboard() {
     navigate(path);
   };
 
-  const navigateTo = (navigateToPath: string, seletedCampaignId = null) => {
+  const navigateTo = (
+    navigateToPath: string,
+    selectedCampaignId = null,
+    name_campaign = null
+  ) => {
     let path = `${process.env.PUBLIC_URL}/${navigateToPath}`;
 
-    dispatch(setSelectedCampaignId(seletedCampaignId));
+    let id = selectedCampaignId;
+
+    if (!id && !!name_campaign) {
+      id = campaigns.find((campaing) => campaing.name === name_campaign).id;
+    }
+
+    dispatch(setSelectedCampaignId(id));
 
     navigate(path);
   };
@@ -99,15 +110,7 @@ export default function Dashboard() {
 
       const campaignsUpdated = data.map((campaign) => {
         return {
-          name_id: campaign.name,
-          name: (
-            <p
-              onClick={() => navigateTo("campaign-groups/", campaign.id)}
-              style={{ color: "#2c7be5", cursor: "pointer", fontSize: 15 }}
-            >
-              {campaign.name}
-            </p>
-          ),
+          name_community: campaign.name,
           totalLinks: campaign.totalLinks,
           projClicks:
             campaign.totalClicks +
@@ -247,11 +250,11 @@ export default function Dashboard() {
     setLoadingCampaigns(true);
 
     try {
-      const viewEmail = window.sessionStorage.getItem("#email_view") || null
-      console.log(viewEmail, "email @@@@@@")
+      const viewEmail = window.sessionStorage.getItem("#email_view") || null;
       const fetchProjResult = await getCampaignsList(showEnded, viewEmail);
-      console.log(fetchProjResult)
+
       setupProjectList(fetchProjResult.data, false);
+      setCampaigns(fetchProjResult.data)
     } catch (error) {
       setError(true);
 
@@ -462,6 +465,7 @@ export default function Dashboard() {
         title="Lista de campanhas"
         columns={COLUMNS}
         data={campaignsListLocal}
+        handleNavigate={navigateTo}
       />
       <Modal show={error}>
         <Modal.Header>
