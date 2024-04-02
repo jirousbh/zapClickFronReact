@@ -39,6 +39,10 @@ const cacheInvalidation = [
     onCall: ["editUser", "createUser", "addAlternateEmail", "delUserAlternateEmail"],
     clean: ["fetchUsers", "fetchUserAlternateEmails"],
   },
+  {
+		onCall: ['scheduleAddJob','editJob','deleteJob'],
+		clean: ['fetchJobs']
+	},
 ];
 
 const init = function (
