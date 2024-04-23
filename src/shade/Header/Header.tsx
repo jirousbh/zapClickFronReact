@@ -1241,6 +1241,7 @@ export default function Header() {
                       className="dropdown-item"
                       onClick={() => {
                         auth.signOut();
+                        localStorage.removeItem("#email")
                         routeChange();
                       }}
                     >

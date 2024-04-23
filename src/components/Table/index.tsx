@@ -12,11 +12,14 @@ interface Props {
   title: string;
   columns: any;
   data: any;
-  handleNavigate?: (navigateToPath: string, selectedCampaignId?: null, name_campaign?: null) => void
+  handleNavigate?: (
+    navigateToPath: string,
+    selectedCampaignId?: null,
+    name_campaign?: null
+  ) => void;
 }
 
 const Table: React.FC<Props> = ({ title, columns, data, handleNavigate }) => {
-
   const tableInstance = useTable(
     {
       columns: columns,
@@ -76,6 +79,7 @@ const Table: React.FC<Props> = ({ title, columns, data, handleNavigate }) => {
                     />
                   </div>
                   <table
+                    id="tbLinkList"
                     {...getTableProps()}
                     className="table table-bordered text-nowrap mb-0"
                   >
@@ -114,13 +118,21 @@ const Table: React.FC<Props> = ({ title, columns, data, handleNavigate }) => {
                         return (
                           <tr className="text-center" {...row.getRowProps()}>
                             {row.cells.map((cell: any) => {
-                              const {column} = cell
+                              const { column } = cell;
                               return (
-                                <td {...cell.getCellProps()} onClick={() => {
-                                  if(column.id === "name_community") {
-                                    handleNavigate && handleNavigate("campaign-groups/", null, cell.value)
-                                  }
-                                }}>
+                                <td
+                                  {...cell.getCellProps()}
+                                  onClick={() => {
+                                    if (column.id === "name_community") {
+                                      handleNavigate &&
+                                        handleNavigate(
+                                          "campaign-groups/",
+                                          null,
+                                          cell.value
+                                        );
+                                    }
+                                  }}
+                                >
                                   {cell.render("Cell")}
                                 </td>
                               );

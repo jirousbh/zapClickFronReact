@@ -79,7 +79,7 @@ export default function CampaignLeads() {
     const selectedCampaign = campaignOptions.find(
       (campaign: any) => campaign.value === value
     );
-    dispatch(setSelectedCampaignId(value))
+    dispatch(setSelectedCampaignId(value));
     fetchLeads(selectedCampaign.value);
   };
 
@@ -107,7 +107,7 @@ export default function CampaignLeads() {
     });
 
     if (!campaignsMapped.length) return;
-    console.log(selectedCampaignId, 'selectedCampaignId leads')
+    console.log(selectedCampaignId, "selectedCampaignId leads");
     if (!!selectedCampaignId) {
       const campaigns = campaignsMapped.map((campaign: any) => ({
         ...campaign,
@@ -139,6 +139,7 @@ export default function CampaignLeads() {
   const getTable = () => {
     const campaignId = leadTotal?.campaignId || "example-test";
     const html = document.getElementById("tbLinkList");
+    console.log(html, "html");
     exportToCSV(html, `${campaignId}_list.csv`);
   };
 

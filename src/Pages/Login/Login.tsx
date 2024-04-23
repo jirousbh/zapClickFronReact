@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button, Col, Form, Row, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../../Firebase";
@@ -10,7 +10,7 @@ const SignIn = () => {
     email: "",
     password: "",
   });
-
+  
   const { email, password } = data;
 
   const changeHandler = (e: any) => {
@@ -20,10 +20,16 @@ const SignIn = () => {
 
   let navigate = useNavigate();
 
-  const routeChange = () => {
+  const routeChange = useCallback(() => {
     let path = `${process.env.PUBLIC_URL}/dashboard/`;
     navigate(path);
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const hasToken = localStorage.getItem("#email") || "";
+
+    if (!!hasToken) routeChange();
+  }, [routeChange]);
 
   const Login = (e: any) => {
     e.preventDefault();
@@ -31,8 +37,8 @@ const SignIn = () => {
       .signInWithEmailAndPassword(email, password)
       .then((user) => {
         console.log(user);
-        if(user.user?.email) {
-          window.localStorage.setItem("#email", user.user?.email)
+        if (user.user?.email) {
+          window.localStorage.setItem("#email", user.user?.email);
         }
         routeChange();
       })

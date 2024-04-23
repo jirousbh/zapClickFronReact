@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../Firebase";
 import {
@@ -38,6 +38,17 @@ const SignUp = () => {
     let path = `${process.env.PUBLIC_URL}/authentication/login`;
     navigate(path);
   };
+
+  const routeChangeDashboard = useCallback(() => {
+    let path = `${process.env.PUBLIC_URL}/dashboard/`;
+    navigate(path);
+  }, [navigate]);
+
+  useEffect(() => {
+    const hasToken = localStorage.getItem("#email") || "";
+
+    if (!!hasToken) routeChangeDashboard();
+  }, [routeChangeDashboard]);
 
   const signUp = async (e: any) => {
     if (!name) setError("Você deve digitar o seu nome");
